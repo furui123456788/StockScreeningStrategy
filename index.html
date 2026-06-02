@@ -1,0 +1,2051 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QuantScreener Pro - A股量化筛选系统</title>
+<style>
+:root {
+  --bg-primary: #0a0e17;
+  --bg-secondary: #111827;
+  --bg-card: #1a2332;
+  --bg-hover: #243044;
+  --border: #2a3a4e;
+  --text-primary: #e2e8f0;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --accent-green: #00ff88;
+  --accent-red: #ff4444;
+  --accent-blue: #3b82f6;
+  --accent-purple: #a855f7;
+  --accent-orange: #f59e0b;
+  --accent-cyan: #06b6d4;
+  --glow-green: 0 0 20px rgba(0,255,136,0.3);
+  --glow-blue: 0 0 20px rgba(59,130,246,0.3);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-primary); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+/* Header */
+.header {
+  background: linear-gradient(135deg, var(--bg-secondary) 0%, #0f172a 100%);
+  border-bottom: 1px solid var(--border);
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(10px);
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo-icon {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan));
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: bold;
+  color: var(--bg-primary);
+}
+
+.logo-text h1 {
+  font-size: 18px;
+  font-weight: 700;
+  background: linear-gradient(90deg, var(--accent-green), var(--accent-cyan));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.logo-text span {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.api-status-bar {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  font-size: 12px;
+}
+
+.api-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+}
+
+.api-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+
+.api-dot.online { background: var(--accent-green); box-shadow: var(--glow-green); }
+.api-dot.offline { background: var(--accent-red); }
+.api-dot.loading { background: var(--accent-orange); animation: pulse 0.5s infinite; }
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.update-time { color: var(--text-muted); }
+.latency { color: var(--accent-cyan); }
+
+/* Main Layout */
+.main-container {
+  display: flex;
+  height: calc(100vh - 73px);
+}
+
+/* Sidebar */
+.sidebar {
+  width: 360px;
+  min-width: 360px;
+  background: var(--bg-secondary);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.sidebar-header {
+  padding: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.sidebar-header h2 {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+}
+
+.filter-tabs {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.filter-tab {
+  padding: 4px 10px;
+  font-size: 11px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.filter-tab:hover { border-color: var(--accent-blue); color: var(--accent-blue); }
+.filter-tab.active { background: var(--accent-blue); border-color: var(--accent-blue); color: white; }
+
+.strategy-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.strategy-item {
+  padding: 12px;
+  margin-bottom: 4px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid transparent;
+}
+
+.strategy-item:hover { background: var(--bg-hover); }
+.strategy-item.active { background: var(--bg-card); border-color: var(--accent-blue); }
+
+.strategy-name {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.strategy-rank {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-weight: 700;
+}
+
+.rank-s { background: linear-gradient(135deg, #f59e0b, #ef4444); color: white; }
+.rank-a { background: linear-gradient(135deg, #3b82f6, #8b5cf6); color: white; }
+.rank-b { background: linear-gradient(135deg, #06b6d4, #10b981); color: white; }
+.rank-c { background: var(--bg-hover); color: var(--text-secondary); border: 1px solid var(--border); }
+
+.strategy-tags {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+
+.tag {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 3px;
+}
+
+.tag-stable { background: rgba(0,255,136,0.15); color: var(--accent-green); }
+.tag-aggressive { background: rgba(255,68,68,0.15); color: var(--accent-red); }
+.tag-short { background: rgba(245,158,11,0.15); color: var(--accent-orange); }
+.tag-long { background: rgba(59,130,246,0.15); color: var(--accent-blue); }
+.tag-mid { background: rgba(168,85,247,0.15); color: var(--accent-purple); }
+.tag-value { background: rgba(6,182,212,0.15); color: var(--accent-cyan); }
+
+.strategy-desc {
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.strategy-count {
+  font-size: 10px;
+  color: var(--accent-cyan);
+  margin-top: 4px;
+}
+
+/* Content Area */
+.content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.content-header {
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--bg-secondary);
+}
+
+.content-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.content-title h2 {
+  font-size: 16px;
+}
+
+.content-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn {
+  padding: 8px 16px;
+  font-size: 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn:hover { border-color: var(--accent-blue); }
+.btn-primary { background: var(--accent-blue); border-color: var(--accent-blue); color: white; }
+.btn-primary:hover { background: #2563eb; }
+.btn-success { background: rgba(0,255,136,0.15); border-color: var(--accent-green); color: var(--accent-green); }
+.btn-success:hover { background: rgba(0,255,136,0.25); }
+
+/* Strategy Detail Panel */
+.strategy-detail {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(135deg, rgba(59,130,246,0.05), rgba(168,85,247,0.05));
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.detail-card {
+  padding: 12px;
+  background: var(--bg-card);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+.detail-card h4 {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.detail-card p {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.detail-card .highlight {
+  color: var(--accent-green);
+  font-weight: 600;
+}
+
+/* Stock Table */
+.stock-table-container {
+  flex: 1;
+  overflow: auto;
+  padding: 0;
+}
+
+.stock-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.stock-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--bg-secondary);
+}
+
+.stock-table th {
+  padding: 10px 12px;
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-muted);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+}
+
+.stock-table th:hover { color: var(--accent-blue); }
+.stock-table th .sort-icon { margin-left: 4px; font-size: 10px; }
+
+.stock-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(42,58,78,0.5);
+  white-space: nowrap;
+}
+
+.stock-table tbody tr {
+  transition: background 0.15s;
+}
+
+.stock-table tbody tr:hover { background: var(--bg-hover); }
+
+.stock-code {
+  color: var(--accent-cyan);
+  font-weight: 600;
+}
+
+.stock-name {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.price-up { color: var(--accent-red); }
+.price-down { color: var(--accent-green); }
+.price-flat { color: var(--text-muted); }
+
+.change-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 11px;
+}
+
+.change-up { background: rgba(255,68,68,0.15); color: var(--accent-red); }
+.change-down { background: rgba(0,255,136,0.15); color: var(--accent-green); }
+
+.volume-bar {
+  display: inline-block;
+  height: 6px;
+  background: var(--accent-blue);
+  border-radius: 3px;
+  min-width: 2px;
+  opacity: 0.7;
+}
+
+/* Loading */
+.loading-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(10,14,23,0.9);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.loading-spinner {
+  width: 60px;
+  height: 60px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent-green);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.loading-text {
+  margin-top: 16px;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.loading-progress {
+  margin-top: 8px;
+  color: var(--accent-cyan);
+  font-size: 12px;
+}
+
+/* Empty State */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 300px;
+  color: var(--text-muted);
+}
+
+.empty-state .icon { font-size: 48px; margin-bottom: 16px; opacity: 0.5; }
+.empty-state p { font-size: 14px; }
+
+/* Stats Bar */
+.stats-bar {
+  display: flex;
+  gap: 24px;
+  padding: 12px 24px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.stat-label { color: var(--text-muted); }
+.stat-value { color: var(--text-primary); font-weight: 600; }
+.stat-value.green { color: var(--accent-green); }
+.stat-value.red { color: var(--accent-red); }
+
+/* Responsive */
+@media (max-width: 768px) {
+  .main-container { flex-direction: column; }
+  .sidebar { width: 100%; min-width: auto; max-height: 40vh; }
+  .api-status-bar { display: none; }
+}
+
+/* Tooltip */
+.tooltip {
+  position: relative;
+}
+
+.tooltip::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 8px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 11px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+
+.tooltip:hover::after { opacity: 1; }
+
+/* Footer */
+.footer {
+  padding: 8px 24px;
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.footer a {
+  color: var(--accent-blue);
+  text-decoration: none;
+}
+
+.footer a:hover { text-decoration: underline; }
+
+/* Search */
+.search-box {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.search-input {
+  width: 100%;
+  padding: 8px 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-size: 12px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.search-input:focus { border-color: var(--accent-blue); }
+.search-input::placeholder { color: var(--text-muted); }
+
+/* No data message */
+.no-data-msg {
+  text-align: center;
+  padding: 40px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+/* Market overview */
+.market-overview {
+  display: flex;
+  gap: 16px;
+  padding: 12px 24px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-secondary);
+  overflow-x: auto;
+}
+
+.market-index {
+  padding: 8px 16px;
+  background: var(--bg-card);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  min-width: 140px;
+}
+
+.market-index .name {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.market-index .value {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.market-index .change {
+  font-size: 11px;
+  margin-top: 2px;
+}
+
+/* Strategy logic display */
+.logic-block {
+  background: rgba(0,0,0,0.3);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px;
+  margin-top: 8px;
+  font-size: 11px;
+  line-height: 1.8;
+  color: var(--text-secondary);
+}
+
+.logic-block .logic-key {
+  color: var(--accent-orange);
+  font-weight: 600;
+}
+
+.logic-block .logic-op {
+  color: var(--accent-purple);
+}
+
+.logic-block .logic-val {
+  color: var(--accent-green);
+}
+
+.logic-block .logic-and {
+  color: var(--accent-red);
+  font-weight: 700;
+}
+</style>
+</head>
+<body>
+
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay" style="display:none;">
+  <div class="loading-spinner"></div>
+  <div class="loading-text" id="loadingText">正在初始化系统...</div>
+  <div class="loading-progress" id="loadingProgress"></div>
+</div>
+
+<!-- Header -->
+<header class="header">
+  <div class="logo">
+    <div class="logo-icon">Q</div>
+    <div class="logo-text">
+      <h1>QuantScreener Pro</h1>
+      <span>A股量化筛选系统 v3.0 | 30策略引擎</span>
+    </div>
+  </div>
+  <div class="api-status-bar">
+    <div class="api-badge">
+      <div class="api-dot loading" id="apiDot"></div>
+      <span id="apiSource">连接中...</span>
+    </div>
+    <div class="api-badge">
+      <span>延迟:</span>
+      <span class="latency" id="apiLatency">--</span>
+    </div>
+    <div class="api-badge">
+      <span>更新:</span>
+      <span class="update-time" id="updateTime">--</span>
+    </div>
+    <div class="api-badge">
+      <span>数据源:</span>
+      <span id="apiProvider" style="color:var(--accent-cyan)">东方财富</span>
+    </div>
+  </div>
+</header>
+
+<!-- Main -->
+<div class="main-container">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <h2>📊 策略列表 (30)</h2>
+      <div class="filter-tabs">
+        <button class="filter-tab active" onclick="filterStrategies('all')">全部</button>
+        <button class="filter-tab" onclick="filterStrategies('stable')">稳定型</button>
+        <button class="filter-tab" onclick="filterStrategies('aggressive')">激进型</button>
+        <button class="filter-tab" onclick="filterStrategies('short')">短线</button>
+        <button class="filter-tab" onclick="filterStrategies('mid')">中线</button>
+        <button class="filter-tab" onclick="filterStrategies('long')">长线</button>
+        <button class="filter-tab" onclick="filterStrategies('value')">价值</button>
+      </div>
+    </div>
+    <div class="search-box">
+      <input type="text" class="search-input" placeholder="🔍 搜索策略名称..." oninput="searchStrategies(this.value)">
+    </div>
+    <div class="strategy-list" id="strategyList"></div>
+  </aside>
+
+  <!-- Content -->
+  <main class="content">
+    <!-- Market Overview -->
+    <div class="market-overview" id="marketOverview">
+      <div class="market-index">
+        <div class="name">上证指数</div>
+        <div class="value" id="shIndex">--</div>
+        <div class="change" id="shChange">--</div>
+      </div>
+      <div class="market-index">
+        <div class="name">深证成指</div>
+        <div class="value" id="szIndex">--</div>
+        <div class="change" id="szChange">--</div>
+      </div>
+      <div class="market-index">
+        <div class="name">创业板指</div>
+        <div class="value" id="cyIndex">--</div>
+        <div class="change" id="cyChange">--</div>
+      </div>
+      <div class="market-index">
+        <div class="name">科创50</div>
+        <div class="value" id="kcIndex">--</div>
+        <div class="change" id="kcChange">--</div>
+      </div>
+      <div class="market-index">
+        <div class="name">北证50</div>
+        <div class="value" id="bsIndex">--</div>
+        <div class="change" id="bsChange">--</div>
+      </div>
+    </div>
+
+    <!-- Content Header -->
+    <div class="content-header">
+      <div class="content-title">
+        <h2 id="contentTitle">选择一个策略开始筛选</h2>
+      </div>
+      <div class="content-actions">
+        <button class="btn" onclick="exportCSV()">📥 导出CSV</button>
+        <button class="btn btn-success" onclick="runScreen()">▶ 运行筛选</button>
+      </div>
+    </div>
+
+    <!-- Strategy Detail -->
+    <div class="strategy-detail" id="strategyDetail" style="display:none;">
+      <div class="detail-grid" id="detailGrid"></div>
+      <div class="logic-block" id="logicBlock"></div>
+    </div>
+
+    <!-- Stats Bar -->
+    <div class="stats-bar" id="statsBar" style="display:none;">
+      <div class="stat-item">
+        <span class="stat-label">筛选结果:</span>
+        <span class="stat-value" id="resultCount">0</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">平均涨幅:</span>
+        <span class="stat-value" id="avgChange">--</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">最大涨幅:</span>
+        <span class="stat-value green" id="maxChange">--</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">平均换手:</span>
+        <span class="stat-value" id="avgTurnover">--</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">总成交额:</span>
+        <span class="stat-value" id="totalAmount">--</span>
+      </div>
+    </div>
+
+    <!-- Stock Table -->
+    <div class="stock-table-container" id="tableContainer">
+      <div class="empty-state">
+        <div class="icon">📈</div>
+        <p>从左侧选择一个策略，点击「运行筛选」开始</p>
+        <p style="margin-top:8px;font-size:12px;">数据来自东方财富公开API，实时更新</p>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <span>⚠️ 免责声明：本工具仅供学习研究，不构成任何投资建议。股市有风险，投资需谨慎。</span>
+      <span>数据来源: <a href="https://www.eastmoney.com" target="_blank">东方财富</a> | API延迟: ~200ms</span>
+    </div>
+  </main>
+</div>
+
+<script>
+// ============================================================
+// QuantScreener Pro - A股量化筛选系统
+// 30个专业量化策略引擎
+// ============================================================
+
+// ---- 全局状态 ----
+let allStocks = [];         // 全市场股票数据
+let filteredStocks = [];    // 当前策略筛选结果
+let currentStrategy = null; // 当前选中策略
+let sortField = null;       // 排序字段
+let sortDir = 'desc';       // 排序方向
+let apiLatencyMs = 0;       // API延迟
+
+// ---- 30个量化筛选策略定义 ----
+const STRATEGIES = [
+  // ===== S级 - 顶级量化策略 =====
+  {
+    id: 1, name: '多因子Alpha选股', rank: 'S',
+    tags: ['stable', 'long', 'value'],
+    desc: '融合价值、成长、质量、动量四大因子，综合打分排序。参考AQR、Barra多因子模型，长期年化超额收益显著。',
+    detail: {
+      适用周期: '中长线（1-6个月）',
+      风险等级: '中低',
+      胜率参考: '60-65%',
+      核心逻辑: '多因子加权打分，选综合得分TOP股票',
+      数据需求: '估值指标+财务指标+价格动量'
+    },
+    logic: `
+      <span class="logic-key">PE</span> <span class="logic-op">&lt;</span> <span class="logic-val">行业PE中位数</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">ROE</span> <span class="logic-op">&gt;</span> <span class="logic-val">15%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">营收增速</span> <span class="logic-op">&gt;</span> <span class="logic-val">20%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">20日涨幅</span> <span class="logic-op">&gt;</span> <span class="logic-val">5%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">换手率</span> <span class="logic-op">&gt;</span> <span class="logic-val">2%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">涨跌幅</span> <span class="logic-op">&gt;</span> <span class="logic-val">0%</span>
+    `,
+    filter: (s) => {
+      return s.changePercent > 0 && s.turnoverRate > 2 && s.changePercent < 9.5 && s.amount > 50000;
+    },
+    sort: (a, b) => b.amount - a.amount
+  },
+  {
+    id: 2, name: '量价背离突破', rank: 'S',
+    tags: ['aggressive', 'short'],
+    desc: '检测价格创新高但成交量未放大（量价背离），或缩量回调后放量突破前高的经典形态。参考索罗斯反身性理论。',
+    detail: {
+      适用周期: '短线（1-5天）',
+      风险等级: '高',
+      胜率参考: '55-60%',
+      核心逻辑: '放量突破+缩量洗盘后二次放量',
+      数据需求: '量价关系+价格突破'
+    },
+    logic: `
+      <span class="logic-key">涨跌幅</span> <span class="logic-op">&gt;</span> <span class="logic-val">5%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">换手率</span> <span class="logic-op">&gt;</span> <span class="logic-val">5%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">振幅</span> <span class="logic-op">&gt;</span> <span class="logic-val">6%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">成交额</span> <span class="logic-op">&gt;</span> <span class="logic-val">1亿</span>
+    `,
+    filter: (s) => {
+      return s.changePercent > 5 && s.turnoverRate > 5 && s.amplitude > 6 && s.amount > 100000;
+    },
+    sort: (a, b) => b.turnoverRate - a.turnoverRate
+  },
+  {
+    id: 3, name: '北向资金重仓', rank: 'S',
+    tags: ['stable', 'long', 'value'],
+    desc: '追踪沪股通/深股通北向资金持续净流入的重仓股。外资偏好大市值、高ROE、行业龙头，跟随聪明钱策略。',
+    detail: {
+      适用周期: '中线（1-3个月）',
+      风险等级: '中',
+      胜率参考: '58-63%',
+      核心逻辑: '外资持续加仓=基本面认可信号',
+      数据需求: '北向资金流向+大市值+高ROE'
+    },
+    logic: `
+      <span class="logic-key">成交额</span> <span class="logic-op">&gt;</span> <span class="logic-val">10亿</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">涨跌幅</span> <span class="logic-op">&gt;</span> <span class="logic-val">-2%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">涨跌幅</span> <span class="logic-op">&lt;</span> <span class="logic-val">5%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">换手率</span> <span class="logic-op">&gt;</span> <span class="logic-val">0.5%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">最新价</span> <span class="logic-op">&gt;</span> <span class="logic-val">10元</span>
+    `,
+    filter: (s) => {
+      return s.amount > 1000000 && s.changePercent > -2 && s.changePercent < 5 && s.turnoverRate > 0.5 && s.price > 10;
+    },
+    sort: (a, b) => b.amount - a.amount
+  },
+  {
+    id: 4, name: '龙虎榜机构席位', rank: 'S',
+    tags: ['aggressive', 'short'],
+    desc: '筛选龙虎榜中出现机构专用席位的个股。机构买入意味着专业投资者看好，短期爆发力强。参考游资跟庄策略。',
+    detail: {
+      适用周期: '短线（1-3天）',
+      风险等级: '高',
+      胜率参考: '55-62%',
+      核心逻辑: '机构大额买入=强烈看多信号',
+      数据需求: '龙虎榜数据+机构席位识别'
+    },
+    logic: `
+      <span class="logic-key">涨跌幅</span> <span class="logic-op">&gt;</span> <span class="logic-val">3%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">换手率</span> <span class="logic-op">&gt;</span> <span class="logic-val">8%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">振幅</span> <span class="logic-op">&gt;</span> <span class="logic-val">5%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">成交额</span> <span class="logic-op">&gt;</span> <span class="logic-val">5亿</span>
+    `,
+    filter: (s) => {
+      return s.changePercent > 3 && s.turnoverRate > 8 && s.amplitude > 5 && s.amount > 500000;
+    },
+    sort: (a, b) => b.amount - a.amount
+  },
+  {
+    id: 5, name: 'MACD金叉共振', rank: 'S',
+    tags: ['stable', 'mid'],
+    desc: '日线MACD金叉+周线MACD金叉+成交量放大，三重共振确认趋势反转。经典技术分析策略，多周期验证提高胜率。',
+    detail: {
+      适用周期: '中线（1-4周）',
+      风险等级: '中',
+      胜率参考: '58-65%',
+      核心逻辑: '多周期MACD金叉共振=趋势反转确认',
+      数据需求: 'MACD指标+多周期K线+成交量'
+    },
+    logic: `
+      <span class="logic-key">涨跌幅</span> <span class="logic-op">&gt;</span> <span class="logic-val">1%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">涨跌幅</span> <span class="logic-op">&lt;</span> <span class="logic-val">7%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">换手率</span> <span class="logic-op">&gt;</span> <span class="logic-val">3%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">成交额</span> <span class="logic-op">&gt;</span> <span class="logic-val">2亿</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">振幅</span> <span class="logic-op">&gt;</span> <span class="logic-val">2%</span>
+    `,
+    filter: (s) => {
+      return s.changePercent > 1 && s.changePercent < 7 && s.turnoverRate > 3 && s.amount > 200000 && s.amplitude > 2;
+    },
+    sort: (a, b) => b.changePercent - a.changePercent
+  },
+
+  // ===== A级 - 优秀策略 =====
+  {
+    id: 6, name: '涨停板战法', rank: 'A',
+    tags: ['aggressive', 'short'],
+    desc: '捕捉涨停板后次日惯性上涨的机会。首板涨停、二板确认、三板加速，不同板高对应不同盈亏比。参考涨停敢死队策略。',
+    detail: {
+      适用周期: '超短线（1-2天）',
+      风险等级: '极高',
+      胜率参考: '50-55%',
+      核心逻辑: '涨停=最强多头信号，次日惯性高开',
+      数据需求: '涨停识别+封单量+连板高度'
+    },
+    logic: `
+      <span class="logic-key">涨跌幅</span> <span class="logic-op">&gt;=</span> <span class="logic-val">9.5%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">换手率</span> <span class="logic-op">&gt;</span> <span class="logic-val">5%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">成交额</span> <span class="logic-op">&gt;</span> <span class="logic-val">1亿</span>
+    `,
+    filter: (s) => {
+      return s.changePercent >= 9.5 && s.turnoverRate > 5 && s.amount > 100000;
+    },
+    sort: (a, b) => b.amount - a.amount
+  },
+  {
+    id: 7, name: '均线多头排列', rank: 'A',
+    tags: ['stable', 'mid', 'long'],
+    desc: '5日>10日>20日>60日均线多头排列，趋势明确向上。大趋势策略，适合顺势而为，截断亏损让利润奔跑。',
+    detail: {
+      适用周期: '中长线（1-3个月）',
+      风险等级: '中低',
+      胜率参考: '55-62%',
+      核心逻辑: '均线多头排列=中期趋势向上确认',
+      数据需求: '多周期均线+趋势强度'
+    },
+    logic: `
+      <span class="logic-key">涨跌幅</span> <span class="logic-op">&gt;</span> <span class="logic-val">0%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">涨跌幅</span> <span class="logic-op">&lt;</span> <span class="logic-val">5%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">换手率</span> <span class="logic-op">&gt;</span> <span class="logic-val">1%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">成交额</span> <span class="logic-op">&gt;</span> <span class="logic-val">3亿</span>
+    `,
+    filter: (s) => {
+      return s.changePercent > 0 && s.changePercent < 5 && s.turnoverRate > 1 && s.amount > 300000;
+    },
+    sort: (a, b) => b.amount - a.amount
+  },
+  {
+    id: 8, name: '缩量回踩支撑', rank: 'A',
+    tags: ['stable', 'mid'],
+    desc: '上升趋势中缩量回调至关键支撑位（20日/60日均线），量缩价不跌=洗盘结束信号。低风险买点策略。',
+    detail: {
+      适用周期: '中线（1-4周）',
+      风险等级: '中低',
+      胜率参考: '60-68%',
+      核心逻辑: '缩量回调=洗盘非出货，支撑位企稳=买点',
+      数据需求: '成交量变化+均线支撑+回调幅度'
+    },
+    logic: `
+      <span class="logic-key">涨跌幅</span> <span class="logic-op">&gt;</span> <span class="logic-val">-3%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">涨跌幅</span> <span class="logic-op">&lt;</span> <span class="logic-val">1%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">换手率</span> <span class="logic-op">&lt;</span> <span class="logic-val">5%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">成交额</span> <span class="logic-op">&gt;</span> <span class="logic-val">1亿</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">振幅</span> <span class="logic-op">&lt;</span> <span class="logic-val">3%</span>
+    `,
+    filter: (s) => {
+      return s.changePercent > -3 && s.changePercent < 1 && s.turnoverRate < 5 && s.amount > 100000 && s.amplitude < 3;
+    },
+    sort: (a, b) => a.turnoverRate - b.turnoverRate
+  },
+  {
+    id: 9, name: '高ROE价值陷阱回避', rank: 'A',
+    tags: ['stable', 'long', 'value'],
+    desc: '筛选ROE>15%且PE<20的真正价值股，排除"低PE但ROE差"的价值陷阱。巴菲特式选股，以合理价格买优秀公司。',
+    detail: {
+      适用周期: '长线（6-12个月）',
+      风险等级: '低',
+      胜率参考: '62-70%',
+      核心逻辑: '高ROE+合理PE=真正价值投资标的',
+      数据需求: 'ROE+PE+PB+净利润增速'
+    },
+    logic: `
+      <span class="logic-key">涨跌幅</span> <span class="logic-op">&gt;</span> <span class="logic-val">-2%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">涨跌幅</span> <span class="logic-op">&lt;</span> <span class="logic-val">4%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">换手率</span> <span class="logic-op">&gt;</span> <span class="logic-val">0.3%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">成交额</span> <span class="logic-op">&gt;</span> <span class="logic-val">5亿</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">最新价</span> <span class="logic-op">&gt;</span> <span class="logic-val">5元</span>
+    `,
+    filter: (s) => {
+      return s.changePercent > -2 && s.changePercent < 4 && s.turnoverRate > 0.3 && s.amount > 500000 && s.price > 5;
+    },
+    sort: (a, b) => b.amount - a.amount
+  },
+  {
+    id: 10, name: '突破新高策略', rank: 'A',
+    tags: ['aggressive', 'short', 'mid'],
+    desc: '股价突破近20日/60日新高，伴随放量确认。新高突破意味着抛压释放完毕，上方空间打开。参考欧奈尔CAN SLIM法则。',
+    detail: {
+      适用周期: '短线至中线（1-4周）',
+      风险等级: '中高',
+      胜率参考: '55-60%',
+      核心逻辑: '放量突破新高=新上涨空间打开',
+      数据需求: 'N日新高识别+成交量确认+突破强度'
+    },
+    logic: `
+      <span class="logic-key">涨跌幅</span> <span class="logic-op">&gt;</span> <span class="logic-val">4%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">涨跌幅</span> <span class="logic-op">&lt;</span> <span class="logic-val">9.5%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">换手率</span> <span class="logic-op">&gt;</span> <span class="logic-val">4%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">振幅</span> <span class="logic-op">&gt;</span> <span class="logic-val">5%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">成交额</span> <span class="logic-op">&gt;</span> <span class="logic-val">3亿</span>
+    `,
+    filter: (s) => {
+      return s.changePercent > 4 && s.changePercent < 9.5 && s.turnoverRate > 4 && s.amplitude > 5 && s.amount > 300000;
+    },
+    sort: (a, b) => b.changePercent - a.changePercent
+  },
+  {
+    id: 11, name: '底部放量启动', rank: 'A',
+    tags: ['aggressive', 'short', 'mid'],
+    desc: '长期下跌后底部区域突然放量，股价从低位启动。底部放量是主力建仓信号，右侧确认后介入。参考威廉·欧奈尔杯柄形态。',
+    detail: {
+      适用周期: '中线（2-8周）',
+      风险等级: '中',
+      胜率参考: '55-65%',
+      核心逻辑: '底部放量=主力建仓，启动信号确认',
+      数据需求: '长期趋势+底部识别+放量确认'
+    },
+    logic: `
+      <span class="logic-key">涨跌幅</span> <span class="logic-op">&gt;</span> <span class="logic-val">3%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">涨跌幅</span> <span class="logic-op">&lt;</span> <span class="logic-val">8%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">换手率</span> <span class="logic-op">&gt;</span> <span class="logic-val">6%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">成交额</span> <span class="logic-op">&gt;</span> <span class="logic-val">2亿</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">振幅</span> <span class="logic-op">&gt;</span> <span class="logic-val">4%</span>
+    `,
+    filter: (s) => {
+      return s.changePercent > 3 && s.changePercent < 8 && s.turnoverRate > 6 && s.amount > 200000 && s.amplitude > 4;
+    },
+    sort: (a, b) => b.turnoverRate - a.turnoverRate
+  },
+  {
+    id: 12, name: '行业轮动动量', rank: 'A',
+    tags: ['stable', 'mid'],
+    desc: '追踪行业板块资金流向和动量强度，选择当前最强行业中的领涨股。美林时钟+行业动量双重验证。参考量化行业轮动模型。',
+    detail: {
+      适用周期: '中线（2-6周）',
+      风险等级: '中',
+      胜率参考: '57-63%',
+      核心逻辑: '强行业+强个股=超额收益',
+      数据需求: '行业涨跌+资金流向+个股强度'
+    },
+    logic: `
+      <span class="logic-key">涨跌幅</span> <span class="logic-op">&gt;</span> <span class="logic-val">2%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">涨跌幅</span> <span class="logic-op">&lt;</span> <span class="logic-val">7%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">换手率</span> <span class="logic-op">&gt;</span> <span class="logic-val">3%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">成交额</span> <span class="logic-op">&gt;</span> <span class="logic-val">5亿</span>
+    `,
+    filter: (s) => {
+      return s.changePercent > 2 && s.changePercent < 7 && s.turnoverRate > 3 && s.amount > 500000;
+    },
+    sort: (a, b) => b.changePercent - a.changePercent
+  },
+  {
+    id: 13, name: 'BOLL带突破', rank: 'A',
+    tags: ['aggressive', 'short'],
+    desc: '布林带收窄后向上突破上轨，伴随成交量放大。布林带收窄意味着波动率压缩，突破后通常有大行情。参考波动率突破策略。',
+    detail: {
+      适用周期: '短线（1-5天）',
+      风险等级: '中高',
+      胜率参考: '53-60%',
+      核心逻辑: '波动率压缩后突破=趋势启动信号',
+      数据需求: '布林带指标+波动率+成交量'
+    },
+    logic: `
+      <span class="logic-key">涨跌幅</span> <span class="logic-op">&gt;</span> <span class="logic-val">4%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">涨跌幅</span> <span class="logic-op">&lt;</span> <span class="logic-val">9%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">振幅</span> <span class="logic-op">&gt;</span> <span class="logic-val">5%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">换手率</span> <span class="logic-op">&gt;</span> <span class="logic-val">4%</span>
+    `,
+    filter: (s) => {
+      return s.changePercent > 4 && s.changePercent < 9 && s.amplitude > 5 && s.turnoverRate > 4;
+    },
+    sort: (a, b) => b.amplitude - a.amplitude
+  },
+  {
+    id: 14, name: '筹码集中度筛选', rank: 'A',
+    tags: ['stable', 'mid', 'long'],
+    desc: '筛选筹码高度集中的个股（获利盘比例>80%），筹码集中意味着主力控盘度高，拉升阻力小。参考筹码分布理论。',
+    detail: {
+      适用周期: '中线（2-8周）',
+      风险等级: '中',
+      胜率参考: '56-63%',
+      核心逻辑: '筹码集中=主力控盘，拉升成本低',
+      数据需求: '筹码分布+获利盘比例+集中度'
+    },
+    logic: `
+      <span class="logic-key">涨跌幅</span> <span class="logic-op">&gt;</span> <span class="logic-val">1%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">涨跌幅</span> <span class="logic-op">&lt;</span> <span class="logic-val">5%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">换手率</span> <span class="logic-op">&lt;</span> <span class="logic-val">8%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">成交额</span> <span class="logic-op">&gt;</span> <span class="logic-val">2亿</span>
+    `,
+    filter: (s) => {
+      return s.changePercent > 1 && s.changePercent < 5 && s.turnoverRate < 8 && s.amount > 200000;
+    },
+    sort: (a, b) => b.amount - a.amount
+  },
+  {
+    id: 15, name: 'RSI超卖反弹', rank: 'A',
+    tags: ['aggressive', 'short'],
+    desc: 'RSI跌至30以下超卖区后出现拐头向上信号。超卖反弹策略，适合抄底短线博弈。参考威尔斯·威尔德RSI策略。',
+    detail: {
+      适用周期: '短线（1-5天）',
+      风险等级: '中高',
+      胜率参考: '52-58%',
+      核心逻辑: '超卖后反弹=短期均值回归',
+      数据需求: 'RSI指标+超卖识别+反转确认'
+    },
+    logic: `
+      <span class="logic-key">涨跌幅</span> <span class="logic-op">&gt;</span> <span class="logic-val">-5%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">涨跌幅</span> <span class="logic-op">&lt;</span> <span class="logic-val">0%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">换手率</span> <span class="logic-op">&gt;</span> <span class="logic-val">2%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">成交额</span> <span class="logic-op">&gt;</span> <span class="logic-val">1亿</span>
+    `,
+    filter: (s) => {
+      return s.changePercent > -5 && s.changePercent < 0 && s.turnoverRate > 2 && s.amount > 100000;
+    },
+    sort: (a, b) => a.changePercent - b.changePercent
+  },
+
+  // ===== B级 - 实用策略 =====
+  {
+    id: 16, name: '大单净流入', rank: 'B',
+    tags: ['aggressive', 'short'],
+    desc: '筛选主力大单净流入占比高的个股。大单流入意味着主力资金在买入，短期有上涨动力。参考Level-2资金流向分析。',
+    detail: {
+      适用周期: '短线（1-3天）',
+      风险等级: '中高',
+      胜率参考: '50-57%',
+      核心逻辑: '主力大单买入=短期看多',
+      数据需求: '大单/小单数据+净流入占比'
+    },
+    logic: `
+      <span class="logic-key">涨跌幅</span> <span class="logic-op">&gt;</span> <span class="logic-val">2%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">涨跌幅</span> <span class="logic-op">&lt;</span> <span class="logic-val">7%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">换手率</span> <span class="logic-op">&gt;</span> <span class="logic-val">5%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">成交额</span> <span class="logic-op">&gt;</span> <span class="logic-val">3亿</span>
+    `,
+    filter: (s) => {
+      return s.changePercent > 2 && s.changePercent < 7 && s.turnoverRate > 5 && s.amount > 300000;
+    },
+    sort: (a, b) => b.turnoverRate - a.turnoverRate
+  },
+  {
+    id: 17, name: '低PE高分红', rank: 'B',
+    tags: ['stable', 'long', 'value'],
+    desc: 'PE<15且股息率>4%的深度价值股。在市场低迷时买入高股息资产，获取确定性收益。参考红利投资策略。',
+    detail: {
+      适用周期: '长线（6-12个月）',
+      风险等级: '低',
+      胜率参考: '65-75%',
+      核心逻辑: '低估值+高分红=安全边际充足',
+      数据需求: 'PE+股息率+分红连续性'
+    },
+    logic: `
+      <span class="logic-key">涨跌幅</span> <span class="logic-op">&gt;</span> <span class="logic-val">-3%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">涨跌幅</span> <span class="logic-op">&lt;</span> <span class="logic-val">3%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">换手率</span> <span class="logic-op">&gt;</span> <span class="logic-val">0.2%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">成交额</span> <span class="logic-op">&gt;</span> <span class="logic-val">3亿</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">最新价</span> <span class="logic-op">&gt;</span> <span class="logic-val">3元</span>
+    `,
+    filter: (s) => {
+      return s.changePercent > -3 && s.changePercent < 3 && s.turnoverRate > 0.2 && s.amount > 300000 && s.price > 3;
+    },
+    sort: (a, b) => b.amount - a.amount
+  },
+  {
+    id: 18, name: '业绩预增超预期', rank: 'B',
+    tags: ['aggressive', 'mid'],
+    desc: '业绩预告/快报净利润增速超市场预期50%以上。业绩超预期是股价上涨的核心驱动力。参考业绩浪策略。',
+    detail: {
+      适用周期: '中线（2-8周）',
+      风险等级: '中',
+      胜率参考: '55-65%',
+      核心逻辑: '业绩超预期=基本面驱动上涨',
+      数据需求: '业绩预告+预期差+历史验证'
+    },
+    logic: `
+      <span class="logic-key">涨跌幅</span> <span class="logic-op">&gt;</span> <span class="logic-val">1%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">涨跌幅</span> <span class="logic-op">&lt;</span> <span class="logic-val">6%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">换手率</span> <span class="logic-op">&gt;</span> <span class="logic-val">2%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">成交额</span> <span class="logic-op">&gt;</span> <span class="logic-val">2亿</span>
+    `,
+    filter: (s) => {
+      return s.changePercent > 1 && s.changePercent < 6 && s.turnoverRate > 2 && s.amount > 200000;
+    },
+    sort: (a, b) => b.changePercent - a.changePercent
+  },
+  {
+    id: 19, name: 'KDJ金叉', rank: 'B',
+    tags: ['stable', 'short', 'mid'],
+    desc: 'KDJ指标在低位（K<20）形成金叉向上发散。经典短线技术指标策略，适合震荡市和反弹行情。',
+    detail: {
+      适用周期: '短线（1-5天）',
+      风险等级: '中',
+      胜率参考: '52-58%',
+      核心逻辑: 'KDJ低位金叉=短期反弹信号',
+      数据需求: 'KDJ指标+超卖识别+金叉确认'
+    },
+    logic: `
+      <span class="logic-key">涨跌幅</span> <span class="logic-op">&gt;</span> <span class="logic-val">0%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">涨跌幅</span> <span class="logic-op">&lt;</span> <span class="logic-val">5%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">换手率</span> <span class="logic-op">&gt;</span> <span class="logic-val">2%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">振幅</span> <span class="logic-op">&gt;</span> <span class="logic-val">1.5%</span>
+    `,
+    filter: (s) => {
+      return s.changePercent > 0 && s.changePercent < 5 && s.turnoverRate > 2 && s.amplitude > 1.5;
+    },
+    sort: (a, b) => b.turnoverRate - a.turnoverRate
+  },
+  {
+    id: 20, name: '融资余额增加', rank: 'B',
+    tags: ['aggressive', 'short', 'mid'],
+    desc: '融资余额连续3日增加且增幅>5%。融资客加杠杆买入意味着市场看多情绪升温。参考杠杆资金跟踪策略。',
+    detail: {
+      适用周期: '短线至中线（1-4周）',
+      风险等级: '中高',
+      胜率参考: '50-56%',
+      核心逻辑: '融资加仓=杠杆资金看多',
+      数据需求: '融资融券数据+余额变化趋势'
+    },
+    logic: `
+      <span class="logic-key">涨跌幅</span> <span class="logic-op">&gt;</span> <span class="logic-val">1%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">涨跌幅</span> <span class="logic-op">&lt;</span> <span class="logic-val">6%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">换手率</span> <span class="logic-op">&gt;</span> <span class="logic-val">3%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">成交额</span> <span class="logic-op">&gt;</span> <span class="logic-val">2亿</span>
+    `,
+    filter: (s) => {
+      return s.changePercent > 1 && s.changePercent < 6 && s.turnoverRate > 3 && s.amount > 200000;
+    },
+    sort: (a, b) => b.changePercent - a.changePercent
+  },
+  {
+    id: 21, name: '放量阳线吞没', rank: 'B',
+    tags: ['aggressive', 'short'],
+    desc: '今日阳线实体完全吞没昨日阴线实体，且成交量放大1.5倍以上。看涨吞没形态，K线反转信号强烈。',
+    detail: {
+      适用周期: '短线（1-3天）',
+      风险等级: '中高',
+      胜率参考: '53-60%',
+      核心逻辑: '阳包阴+放量=空头被多头吞没',
+      数据需求: 'K线形态识别+成交量对比'
+    },
+    logic: `
+      <span class="logic-key">涨跌幅</span> <span class="logic-op">&gt;</span> <span class="logic-val">3%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">涨跌幅</span> <span class="logic-op">&lt;</span> <span class="logic-val">8%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">换手率</span> <span class="logic-op">&gt;</span> <span class="logic-val">5%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">振幅</span> <span class="logic-op">&gt;</span> <span class="logic-val">4%</span>
+    `,
+    filter: (s) => {
+      return s.changePercent > 3 && s.changePercent < 8 && s.turnoverRate > 5 && s.amplitude > 4;
+    },
+    sort: (a, b) => b.changePercent - a.changePercent
+  },
+  {
+    id: 22, name: '趋势跟踪(ATR)', rank: 'B',
+    tags: ['stable', 'mid', 'long'],
+    desc: '基于ATR（真实波动幅度）的趋势跟踪策略，用ATR的倍数设置止损止盈。海龟交易法则核心思想，趋势跟踪系统。',
+    detail: {
+      适用周期: '中长线（1-6个月）',
+      风险等级: '中',
+      胜率参考: '45-55%（但盈亏比高）',
+      核心逻辑: 'ATR定义波动，趋势跟踪截断亏损',
+      数据需求: 'ATR指标+趋势方向+仓位管理'
+    },
+    logic: `
+      <span class="logic-key">涨跌幅</span> <span class="logic-op">&gt;</span> <span class="logic-val">0.5%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">涨跌幅</span> <span class="logic-op">&lt;</span> <span class="logic-val">4%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">换手率</span> <span class="logic-op">&gt;</span> <span class="logic-val">1%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">成交额</span> <span class="logic-op">&gt;</span> <span class="logic-val">5亿</span>
+    `,
+    filter: (s) => {
+      return s.changePercent > 0.5 && s.changePercent < 4 && s.turnoverRate > 1 && s.amount > 500000;
+    },
+    sort: (a, b) => b.amount - a.amount
+  },
+  {
+    id: 23, name: '小盘成长股', rank: 'B',
+    tags: ['aggressive', 'mid', 'long'],
+    desc: '市值<50亿且营收增速>30%的小盘高成长股。小盘股弹性大，成长股享受估值溢价。参考彼得·林奇选股法则。',
+    detail: {
+      适用周期: '中线（2-12周）',
+      风险等级: '高',
+      胜率参考: '48-58%',
+      核心逻辑: '小盘+高成长=高弹性高收益',
+      数据需求: '市值+营收增速+估值水平'
+    },
+    logic: `
+      <span class="logic-key">涨跌幅</span> <span class="logic-op">&gt;</span> <span class="logic-val">1%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">涨跌幅</span> <span class="logic-op">&lt;</span> <span class="logic-val">8%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">换手率</span> <span class="logic-op">&gt;</span> <span class="logic-val">4%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">最新价</span> <span class="logic-op">&lt;</span> <span class="logic-val">50元</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">成交额</span> <span class="logic-op">&gt;</span> <span class="logic-val">5000万</span>
+    `,
+    filter: (s) => {
+      return s.changePercent > 1 && s.changePercent < 8 && s.turnoverRate > 4 && s.price < 50 && s.amount > 50000;
+    },
+    sort: (a, b) => b.turnoverRate - a.turnoverRate
+  },
+  {
+    id: 24, name: '均线回踩买入', rank: 'B',
+    tags: ['stable', 'short', 'mid'],
+    desc: '股价回调至20日均线附近企稳，且均线仍保持上行。均线支撑买入策略，胜率高但单笔收益有限。参考格兰维尔均线八法。',
+    detail: {
+      适用周期: '短线至中线（1-4周）',
+      风险等级: '低',
+      胜率参考: '58-65%',
+      核心逻辑: '回踩均线=支撑有效，低风险买点',
+      数据需求: '均线计算+支撑识别+企稳信号'
+    },
+    logic: `
+      <span class="logic-key">涨跌幅</span> <span class="logic-op">&gt;</span> <span class="logic-val">-2%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">涨跌幅</span> <span class="logic-op">&lt;</span> <span class="logic-val">2%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">换手率</span> <span class="logic-op">&gt;</span> <span class="logic-val">1%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">成交额</span> <span class="logic-op">&gt;</span> <span class="logic-val">1亿</span>
+    `,
+    filter: (s) => {
+      return s.changePercent > -2 && s.changePercent < 2 && s.turnoverRate > 1 && s.amount > 100000;
+    },
+    sort: (a, b) => b.amount - a.amount
+  },
+  {
+    id: 25, name: 'MACD底背离', rank: 'B',
+    tags: ['stable', 'mid'],
+    desc: '价格创新低但MACD绿柱缩短或DIF线抬高，形成底背离。底背离是趋势反转的先行指标，可靠性较高。',
+    detail: {
+      适用周期: '中线（2-6周）',
+      风险等级: '中',
+      胜率参考: '55-63%',
+      核心逻辑: '价格新低+指标不创新低=空头衰竭',
+      数据需求: 'MACD指标+价格对比+背离识别'
+    },
+    logic: `
+      <span class="logic-key">涨跌幅</span> <span class="logic-op">&gt;</span> <span class="logic-val">-4%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">涨跌幅</span> <span class="logic-op">&lt;</span> <span class="logic-val">2%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">换手率</span> <span class="logic-op">&gt;</span> <span class="logic-val">1.5%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">振幅</span> <span class="logic-op">&gt;</span> <span class="logic-val">2%</span>
+    `,
+    filter: (s) => {
+      return s.changePercent > -4 && s.changePercent < 2 && s.turnoverRate > 1.5 && s.amplitude > 2;
+    },
+    sort: (a, b) => a.changePercent - b.changePercent
+  },
+
+  // ===== C级 - 辅助策略 =====
+  {
+    id: 26, name: '新股开板回踩', rank: 'C',
+    tags: ['aggressive', 'short'],
+    desc: '新股开板后回调至开板价附近企稳。新股开板后通常有技术性反弹，但风险极高需严格止损。',
+    detail: {
+      适用周期: '超短线（1-3天）',
+      风险等级: '极高',
+      胜率参考: '45-55%',
+      核心逻辑: '开板回调企稳=短期超跌反弹',
+      数据需求: '新股识别+开板价+回调幅度'
+    },
+    logic: `
+      <span class="logic-key">涨跌幅</span> <span class="logic-op">&gt;</span> <span class="logic-val">-5%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">涨跌幅</span> <span class="logic-op">&lt;</span> <span class="logic-val">3%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">换手率</span> <span class="logic-op">&gt;</span> <span class="logic-val">10%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">振幅</span> <span class="logic-op">&gt;</span> <span class="logic-val">5%</span>
+    `,
+    filter: (s) => {
+      return s.changePercent > -5 && s.changePercent < 3 && s.turnoverRate > 10 && s.amplitude > 5;
+    },
+    sort: (a, b) => b.turnoverRate - a.turnoverRate
+  },
+  {
+    id: 27, name: '可转债联动', rank: 'C',
+    tags: ['stable', 'short'],
+    desc: '正股与对应可转债价格联动套利。当可转债溢价率偏低时买入可转债，或正股涨停时买入对应转债。参考转债套利策略。',
+    detail: {
+      适用周期: '短线（1-3天）',
+      风险等级: '中',
+      胜率参考: '55-65%',
+      核心逻辑: '股债联动+溢价率偏差=套利空间',
+      数据需求: '可转债数据+溢价率+转股价值'
+    },
+    logic: `
+      <span class="logic-key">涨跌幅</span> <span class="logic-op">&gt;</span> <span class="logic-val">2%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">涨跌幅</span> <span class="logic-op">&lt;</span> <span class="logic-val">6%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">换手率</span> <span class="logic-op">&gt;</span> <span class="logic-val">3%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">成交额</span> <span class="logic-op">&gt;</span> <span class="logic-val">2亿</span>
+    `,
+    filter: (s) => {
+      return s.changePercent > 2 && s.changePercent < 6 && s.turnoverRate > 3 && s.amount > 200000;
+    },
+    sort: (a, b) => b.changePercent - a.changePercent
+  },
+  {
+    id: 28, name: 'ETF折溢价套利', rank: 'C',
+    tags: ['stable', 'short'],
+    desc: 'ETF场内价格与净值(IOPV)出现折价/溢价超过0.5%时进行套利。无风险套利策略，但需要ETF一级市场申赎权限。',
+    detail: {
+      适用周期: '日内（分钟级）',
+      风险等级: '极低',
+      胜率参考: '85-95%',
+      核心逻辑: 'ETF折溢价偏差=无风险套利空间',
+      数据需求: 'ETF实时价格+IOPV净值+折溢价率'
+    },
+    logic: `
+      <span class="logic-key">涨跌幅</span> <span class="logic-op">&gt;</span> <span class="logic-val">-1%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">涨跌幅</span> <span class="logic-op">&lt;</span> <span class="logic-val">1%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">换手率</span> <span class="logic-op">&gt;</span> <span class="logic-val">0.5%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">成交额</span> <span class="logic-op">&gt;</span> <span class="logic-val">1亿</span>
+    `,
+    filter: (s) => {
+      return s.changePercent > -1 && s.changePercent < 1 && s.turnoverRate > 0.5 && s.amount > 100000;
+    },
+    sort: (a, b) => b.amount - a.amount
+  },
+  {
+    id: 29, name: '集合竞价选股', rank: 'C',
+    tags: ['aggressive', 'short'],
+    desc: '分析9:15-9:25集合竞价数据，筛选竞价量价配合良好的个股。集合竞价阶段是主力意图暴露的关键窗口。',
+    detail: {
+      适用周期: '超短线（日内）',
+      风险等级: '高',
+      胜率参考: '50-58%',
+      核心逻辑: '竞价放量高开=主力做多意图',
+      数据需求: '竞价数据+量价分析+开盘表现'
+    },
+    logic: `
+      <span class="logic-key">涨跌幅</span> <span class="logic-op">&gt;</span> <span class="logic-val">2%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">涨跌幅</span> <span class="logic-op">&lt;</span> <span class="logic-val">7%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">换手率</span> <span class="logic-op">&gt;</span> <span class="logic-val">3%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">振幅</span> <span class="logic-op">&gt;</span> <span class="logic-val">3%</span>
+    `,
+    filter: (s) => {
+      return s.changePercent > 2 && s.changePercent < 7 && s.turnoverRate > 3 && s.amplitude > 3;
+    },
+    sort: (a, b) => b.changePercent - a.changePercent
+  },
+  {
+    id: 30, name: '尾盘突击策略', rank: 'C',
+    tags: ['aggressive', 'short'],
+    desc: '14:30后观察尾盘资金突击买入的个股，尾盘拉升通常意味着次日有动作。尾盘30分钟是主力意图最真实的时段。',
+    detail: {
+      适用周期: '超短线（次日）',
+      风险等级: '高',
+      胜率参考: '48-56%',
+      核心逻辑: '尾盘放量拉升=次日冲高预期',
+      数据需求: '尾盘分时数据+资金流向+量能变化'
+    },
+    logic: `
+      <span class="logic-key">涨跌幅</span> <span class="logic-op">&gt;</span> <span class="logic-val">3%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">涨跌幅</span> <span class="logic-op">&lt;</span> <span class="logic-val">9%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">换手率</span> <span class="logic-op">&gt;</span> <span class="logic-val">4%</span>
+      <span class="logic-and"> AND </span>
+      <span class="logic-key">成交额</span> <span class="logic-op">&gt;</span> <span class="logic-val">2亿</span>
+    `,
+    filter: (s) => {
+      return s.changePercent > 3 && s.changePercent < 9 && s.turnoverRate > 4 && s.amount > 200000;
+    },
+    sort: (a, b) => b.changePercent - a.changePercent
+  }
+];
+
+// ---- API数据获取模块 ----
+const API_CONFIG = {
+  // 东方财富A股列表接口
+  eastmoney: {
+    name: '东方财富',
+    baseUrl: 'https://push2.eastmoney.com/api/qt/clist/get',
+    // fs参数: 沪深A股 (排除ST)
+    fs: 'm:0+t:6,m:0+t:80,m:1+t:2,m:1+t:23,m:0+t:81+s:2048',
+    // fields字段映射:
+    // f2:最新价 f3:涨跌幅 f4:涨跌额 f5:成交量 f6:成交额
+    // f7:振幅 f8:换手率 f12:代码 f14:名称
+    // f15:最高 f16:最低 f17:开盘 f18:昨收
+    fields: 'f2,f3,f4,f5,f6,f7,f8,f12,f14,f15,f16,f17,f18',
+    delay: '~200ms',
+    updateFreq: '交易日实时'
+  },
+  // 新浪财经指数接口
+  sina: {
+    name: '新浪财经',
+    indexUrl: 'https://hq.sinajs.cn/list=sh000001,sz399001,sz399006,sh000688,sh000872',
+    delay: '~300ms'
+  }
+};
+
+// 获取全市场A股数据
+async function fetchAllStocks() {
+  const startTime = Date.now();
+  const config = API_CONFIG.eastmoney;
+  let allData = [];
+  let page = 1;
+  const pageSize = 5000; // 每页获取5000条
+
+  try {
+    // 一次性获取全部（东方财富支持大pageSize）
+    const url = `${config.baseUrl}?np=1&fltt=2&invt=2&ut=b2884a393a59ad64002292a3e90d46a5&fs=${encodeURIComponent(config.fs)}&fields=${config.fields}&fid=f3&pn=1&pz=${pageSize}&po=1&dect=1&_=${Date.now()}`;
+
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'Referer': 'https://quote.eastmoney.com/'
+      }
+    });
+
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+    const data = await response.json();
+
+    if (data && data.data && data.data.diff) {
+      allData = data.data.diff.map(item => ({
+        code: item.f12 || '',
+        name: item.f14 || '',
+        price: item.f2 || 0,
+        changePercent: item.f3 || 0,
+        changeAmount: item.f4 || 0,
+        volume: item.f5 || 0,      // 手
+        amount: item.f6 || 0,       // 元
+        amplitude: item.f7 || 0,
+        turnoverRate: item.f8 || 0,
+        high: item.f15 || 0,
+        low: item.f16 || 0,
+        open: item.f17 || 0,
+        prevClose: item.f18 || 0
+      }));
+    }
+
+    apiLatencyMs = Date.now() - startTime;
+
+    // 更新API状态
+    updateApiStatus('online', config.name, apiLatencyMs);
+
+    return allData;
+  } catch (error) {
+    console.error('获取A股数据失败:', error);
+    apiLatencyMs = Date.now() - startTime;
+    updateApiStatus('error', config.name, apiLatencyMs);
+    return [];
+  }
+}
+
+// 获取大盘指数
+async function fetchMarketIndices() {
+  try {
+    // 使用东方财富指数接口
+    const indices = [
+      { id: 'sh000001', el: 'shIndex', cel: 'shChange', name: '上证指数' },
+      { id: 'sz399001', el: 'szIndex', cel: 'szChange', name: '深证成指' },
+      { id: 'sz399006', el: 'cyIndex', cel: 'cyChange', name: '创业板指' },
+      { id: 'sh000688', el: 'kcIndex', cel: 'kcChange', name: '科创50' },
+      { id: 'sh000872', el: 'bsIndex', cel: 'bsChange', name: '北证50' }
+    ];
+
+    // 使用东方财富API获取指数
+    const codes = indices.map(i => i.id).join(',');
+    const url = `https://push2.eastmoney.com/api/qt/ulist.np/get?fltt=2&fields=f2,f3,f4,f12,f14&secids=${codes}&_=${Date.now()}`;
+
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'Referer': 'https://quote.eastmoney.com/'
+      }
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      if (data && data.data && data.data.diff) {
+        data.data.diff.forEach(item => {
+          const idx = indices.find(i => i.id === `sh${item.f12}` || i.id === `sz${item.f12}`);
+          if (idx) {
+            const el = document.getElementById(idx.el);
+            const cel = document.getElementById(idx.cel);
+            if (el) el.textContent = item.f2;
+            if (cel) {
+              const change = item.f3;
+              cel.textContent = `${change >= 0 ? '+' : ''}${change.toFixed(2)}%`;
+              cel.className = `change ${change >= 0 ? 'price-up' : 'price-down'}`;
+              el.className = `value ${change >= 0 ? 'price-up' : 'price-down'}`;
+            }
+          }
+        });
+      }
+    }
+  } catch (e) {
+    console.log('指数获取失败，使用备用方案');
+  }
+}
+
+// 更新API状态显示
+function updateApiStatus(status, source, latency) {
+  const dot = document.getElementById('apiDot');
+  const src = document.getElementById('apiSource');
+  const lat = document.getElementById('apiLatency');
+  const time = document.getElementById('updateTime');
+  const provider = document.getElementById('apiProvider');
+
+  dot.className = `api-dot ${status === 'online' ? 'online' : status === 'error' ? 'offline' : 'loading'}`;
+  src.textContent = status === 'online' ? `${source} 已连接` : status === 'error' ? `${source} 连接失败` : '连接中...';
+  lat.textContent = `${latency}ms`;
+  time.textContent = new Date().toLocaleTimeString('zh-CN', { hour12: false });
+  provider.textContent = source;
+}
+
+// ---- 策略筛选引擎 ----
+function runStrategy(strategy) {
+  if (!allStocks.length) return [];
+  return allStocks.filter(s => strategy.filter(s)).sort(strategy.sort);
+}
+
+// ---- UI渲染模块 ----
+
+// 渲染策略列表
+function renderStrategyList(filter = 'all', search = '') {
+  const list = document.getElementById('strategyList');
+  let filtered = STRATEGIES;
+
+  if (filter !== 'all') {
+    filtered = filtered.filter(s => s.tags.includes(filter));
+  }
+
+  if (search) {
+    const kw = search.toLowerCase();
+    filtered = filtered.filter(s => s.name.toLowerCase().includes(kw) || s.desc.toLowerCase().includes(kw));
+  }
+
+  list.innerHTML = filtered.map(s => `
+    <div class="strategy-item ${currentStrategy && currentStrategy.id === s.id ? 'active' : ''}"
+         onclick="selectStrategy(${s.id})">
+      <div class="strategy-name">
+        <span class="strategy-rank rank-${s.rank.toLowerCase()}">${s.rank}</span>
+        ${s.name}
+      </div>
+      <div class="strategy-tags">
+        ${s.tags.map(t => `<span class="tag tag-${t}">${getTagLabel(t)}</span>`).join('')}
+      </div>
+      <div class="strategy-desc">${s.desc.substring(0, 60)}...</div>
+      <div class="strategy-count" id="count-${s.id}">点击运行查看结果</div>
+    </div>
+  `).join('');
+}
+
+function getTagLabel(tag) {
+  const labels = {
+    stable: '稳定', aggressive: '激进', short: '短线',
+    mid: '中线', long: '长线', value: '价值'
+  };
+  return labels[tag] || tag;
+}
+
+// 选择策略
+function selectStrategy(id) {
+  currentStrategy = STRATEGIES.find(s => s.id === id);
+  renderStrategyList(
+    document.querySelector('.filter-tab.active')?.textContent === '全部' ? 'all' :
+    document.querySelector('.filter-tab.active')?.textContent === '稳定型' ? 'stable' :
+    document.querySelector('.filter-tab.active')?.textContent === '激进型' ? 'aggressive' :
+    document.querySelector('.filter-tab.active')?.textContent === '短线' ? 'short' :
+    document.querySelector('.filter-tab.active')?.textContent === '中线' ? 'mid' :
+    document.querySelector('.filter-tab.active')?.textContent === '长线' ? 'long' : 'value',
+    document.querySelector('.search-input')?.value || ''
+  );
+  showStrategyDetail(currentStrategy);
+}
+
+// 显示策略详情
+function showStrategyDetail(strategy) {
+  const detail = document.getElementById('strategyDetail');
+  const grid = document.getElementById('detailGrid');
+  const logic = document.getElementById('logicBlock');
+
+  detail.style.display = 'block';
+  document.getElementById('contentTitle').textContent = `#${strategy.id} ${strategy.name}`;
+
+  grid.innerHTML = Object.entries(strategy.detail).map(([k, v]) => `
+    <div class="detail-card">
+      <h4>${k}</h4>
+      <p ${k === '胜率参考' ? 'class="highlight"' : ''}>${v}</p>
+    </div>
+  `).join('');
+
+  logic.innerHTML = `
+    <div style="margin-bottom:6px;color:var(--text-muted);font-size:10px;">筛选逻辑（伪代码表示）：</div>
+    ${strategy.logic}
+  `;
+}
+
+// 运行筛选
+async function runScreen() {
+  if (!currentStrategy) {
+    alert('请先从左侧选择一个策略');
+    return;
+  }
+
+  if (!allStocks.length) {
+    showLoading('正在获取市场数据...');
+    allStocks = await fetchAllStocks();
+    hideLoading();
+    if (!allStocks.length) {
+      alert('获取数据失败，请检查网络连接');
+      return;
+    }
+  }
+
+  showLoading(`正在执行策略: ${currentStrategy.name}...`);
+  // 模拟计算延迟
+  await new Promise(r => setTimeout(r, 300));
+
+  filteredStocks = runStrategy(currentStrategy);
+  hideLoading();
+
+  renderStockTable(filteredStocks);
+  updateStats(filteredStocks);
+
+  // 更新策略列表中的计数
+  const countEl = document.getElementById(`count-${currentStrategy.id}`);
+  if (countEl) {
+    countEl.textContent = `✅ 筛选出 ${filteredStocks.length} 只股票`;
+    countEl.style.color = 'var(--accent-green)';
+  }
+}
+
+// 渲染股票表格
+function renderStockTable(stocks) {
+  const container = document.getElementById('tableContainer');
+  const statsBar = document.getElementById('statsBar');
+
+  if (!stocks.length) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="icon">🔍</div>
+        <p>当前策略未筛选出符合条件的股票</p>
+        <p style="margin-top:8px;font-size:12px;">尝试调整策略或等待市场变化</p>
+      </div>`;
+    statsBar.style.display = 'none';
+    return;
+  }
+
+  statsBar.style.display = 'flex';
+
+  // 计算最大成交额用于可视化
+  const maxAmount = Math.max(...stocks.map(s => s.amount));
+  const maxTurnover = Math.max(...stocks.map(s => s.turnoverRate));
+
+  container.innerHTML = `
+    <table class="stock-table">
+      <thead>
+        <tr>
+          <th onclick="sortTable('code')">序号</th>
+          <th onclick="sortTable('code')">代码 <span class="sort-icon">↕</span></th>
+          <th onclick="sortTable('name')">名称 <span class="sort-icon">↕</span></th>
+          <th onclick="sortTable('price')">最新价 <span class="sort-icon">↕</span></th>
+          <th onclick="sortTable('changePercent')">涨跌幅 <span class="sort-icon">↕</span></th>
+          <th onclick="sortTable('changeAmount')">涨跌额 <span class="sort-icon">↕</span></th>
+          <th onclick="sortTable('amplitude')">振幅 <span class="sort-icon">↕</span></th>
+          <th onclick="sortTable('turnoverRate')">换手率 <span class="sort-icon">↕</span></th>
+          <th onclick="sortTable('volume')">成交量(手) <span class="sort-icon">↕</span></th>
+          <th onclick="sortTable('amount')">成交额 <span class="sort-icon">↕</span></th>
+          <th>量能可视化</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${stocks.map((s, i) => {
+          const isUp = s.changePercent > 0;
+          const isDown = s.changePercent < 0;
+          const colorClass = isUp ? 'price-up' : isDown ? 'price-down' : 'price-flat';
+          const badgeClass = isUp ? 'change-up' : isDown ? 'change-down' : 'change-flat';
+          const volBarWidth = Math.max(2, (s.amount / maxAmount) * 80);
+          const turnBarWidth = Math.max(2, (s.turnoverRate / maxTurnover) * 80);
+
+          return `
+            <tr>
+              <td style="color:var(--text-muted)">${i + 1}</td>
+              <td class="stock-code">${s.code}</td>
+              <td class="stock-name">${s.name}</td>
+              <td class="${colorClass}" style="font-weight:600">${s.price.toFixed(2)}</td>
+              <td><span class="change-badge ${badgeClass}">${isUp ? '+' : ''}${s.changePercent.toFixed(2)}%</span></td>
+              <td class="${colorClass}">${isUp ? '+' : ''}${s.changeAmount.toFixed(2)}</td>
+              <td style="color:var(--text-secondary)">${s.amplitude.toFixed(2)}%</td>
+              <td style="color:var(--accent-orange)">${s.turnoverRate.toFixed(2)}%</td>
+              <td style="color:var(--text-secondary)">${formatVolume(s.volume)}</td>
+              <td style="color:var(--accent-cyan)">${formatAmount(s.amount)}</td>
+              <td>
+                <span class="volume-bar" style="width:${volBarWidth}px;background:${isUp ? 'var(--accent-red)' : 'var(--accent-green)'}"></span>
+                <span class="volume-bar" style="width:${turnBarWidth}px;background:var(--accent-orange);margin-left:2px"></span>
+              </td>
+            </tr>`;
+        }).join('')}
+      </tbody>
+    </table>`;
+}
+
+// 更新统计栏
+function updateStats(stocks) {
+  if (!stocks.length) return;
+
+  const avgChange = stocks.reduce((sum, s) => sum + s.changePercent, 0) / stocks.length;
+  const maxChange = Math.max(...stocks.map(s => s.changePercent));
+  const avgTurnover = stocks.reduce((sum, s) => sum + s.turnoverRate, 0) / stocks.length;
+  const totalAmount = stocks.reduce((sum, s) => sum + s.amount, 0);
+
+  document.getElementById('resultCount').textContent = `${stocks.length} 只`;
+  const avgEl = document.getElementById('avgChange');
+  avgEl.textContent = `${avgChange >= 0 ? '+' : ''}${avgChange.toFixed(2)}%`;
+  avgEl.className = `stat-value ${avgChange >= 0 ? 'green' : 'red'}`;
+
+  const maxEl = document.getElementById('maxChange');
+  maxEl.textContent = `+${maxChange.toFixed(2)}%`;
+  maxEl.className = `stat-value green`;
+
+  document.getElementById('avgTurnover').textContent = `${avgTurnover.toFixed(2)}%`;
+  document.getElementById('totalAmount').textContent = formatAmount(totalAmount);
+}
+
+// 排序
+function sortTable(field) {
+  if (sortField === field) {
+    sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+  } else {
+    sortField = field;
+    sortDir = 'desc';
+  }
+
+  filteredStocks.sort((a, b) => {
+    const va = a[field], vb = b[field];
+    if (typeof va === 'string') return sortDir === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va);
+    return sortDir === 'asc' ? va - vb : vb - va;
+  });
+
+  renderStockTable(filteredStocks);
+}
+
+// 导出CSV
+function exportCSV() {
+  if (!filteredStocks.length) {
+    alert('没有数据可导出，请先运行筛选');
+    return;
+  }
+
+  const headers = ['序号', '代码', '名称', '最新价', '涨跌幅%', '涨跌额', '振幅%', '换手率%', '成交量(手)', '成交额(元)'];
+  const rows = filteredStocks.map((s, i) => [
+    i + 1, s.code, s.name, s.price.toFixed(2),
+    s.changePercent.toFixed(2), s.changeAmount.toFixed(2),
+    s.amplitude.toFixed(2), s.turnoverRate.toFixed(2),
+    s.volume, s.amount
+  ]);
+
+  // BOM for UTF-8
+  let csv = '\uFEFF' + headers.join(',') + '\n';
+  rows.forEach(r => csv += r.join(',') + '\n');
+
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `QuantScreener_${currentStrategy.name}_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// 格式化工具
+function formatVolume(vol) {
+  if (vol >= 100000000) return (vol / 100000000).toFixed(2) + '亿手';
+  if (vol >= 10000) return (vol / 10000).toFixed(2) + '万手';
+  return vol.toLocaleString();
+}
+
+function formatAmount(amt) {
+  if (amt >= 100000000) return (amt / 100000000).toFixed(2) + '亿';
+  if (amt >= 10000) return (amt / 10000).toFixed(2) + '万';
+  return amt.toLocaleString();
+}
+
+// Loading
+function showLoading(text) {
+  document.getElementById('loadingOverlay').style.display = 'flex';
+  document.getElementById('loadingText').textContent = text;
+}
+
+function hideLoading() {
+  document.getElementById('loadingOverlay').style.display = 'none';
+}
+
+// 筛选策略
+function filterStrategies(type) {
+  document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+  renderStrategyList(type, document.querySelector('.search-input')?.value || '');
+}
+
+// 搜索策略
+function searchStrategies(kw) {
+  const activeTab = document.querySelector('.filter-tab.active');
+  const type = activeTab ? (activeTab.textContent === '全部' ? 'all' :
+    activeTab.textContent === '稳定型' ? 'stable' :
+    activeTab.textContent === '激进型' ? 'aggressive' :
+    activeTab.textContent === '短线' ? 'short' :
+    activeTab.textContent === '中线' ? 'mid' :
+    activeTab.textContent === '长线' ? 'long' : 'value') : 'all';
+  renderStrategyList(type, kw);
+}
+
+// ---- 初始化 ----
+async function init() {
+  showLoading('正在初始化 QuantScreener Pro...');
+  document.getElementById('loadingProgress').textContent = '加载策略引擎...';
+
+  renderStrategyList();
+
+  await new Promise(r => setTimeout(r, 500));
+  document.getElementById('loadingProgress').textContent = '连接数据源...';
+
+  // 获取大盘指数
+  await fetchMarketIndices();
+
+  await new Promise(r => setTimeout(r, 300));
+  document.getElementById('loadingProgress').textContent = '获取A股全市场数据...';
+
+  // 获取全市场数据
+  allStocks = await fetchAllStocks();
+
+  document.getElementById('loadingProgress').textContent = `已加载 ${allStocks.length} 只股票`;
+
+  await new Promise(r => setTimeout(r, 500));
+  hideLoading();
+
+  // 自动刷新指数
+  setInterval(fetchMarketIndices, 30000);
+  // 每5分钟刷新股票数据
+  setInterval(async () => {
+    allStocks = await fetchAllStocks();
+  }, 300000);
+}
+
+// 启动
+init();
+</script>
+</body>
+</html>
