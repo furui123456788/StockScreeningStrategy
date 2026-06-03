@@ -926,6 +926,14 @@ body.multi-mode .strategy-item.selected { border-color: var(--accent-blue); back
       <span>数据源:</span>
       <span id="apiProvider" style="color:var(--accent-cyan)">东方财富</span>
     </div>
+    <div class="api-badge">
+      <span>编码:</span>
+      <select id="encodingSelect" onchange="changeEncoding(this.value)" style="background:var(--bg-primary);color:var(--text-primary);border:1px solid var(--border);border-radius:4px;padding:2px 6px;font-size:12px">
+        <option value="utf-8">UTF-8</option>
+        <option value="gbk">GBK</option>
+        <option value="gb2312">GB2312</option>
+      </select>
+    </div>
   </div>
 </header>
 
@@ -2165,19 +2173,43 @@ async function fetchAllStocks() {
         console.log(`[DEBUG] 需要请求 ${totalPages} 页，每页${pageSize}条`);
 
         for (let page = 1; page <= totalPages; page++) {
-          url = `${source.baseUrl}?np=1&fltt=2&invt=2&ut=b2884a393a59ad64002292a3e90d46a5&fs=${encodeURIComponent(source.fs)}&fields=${source.fields}&fid=f3&pn=${page}&pz=${pageSize}&po=1&dect=1&_=${Date.now()}`;
-          response = await fetch(url, {
-            headers: {
-              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-              'Referer': 'https://quote.eastmoney.com/'
+          let retries = 3;
+          let success = false;
+          while (retries > 0 && !success) {
+            try {
+              url = `${source.baseUrl}?np=1&fltt=2&invt=2&ut=b2884a393a59ad64002292a3e90d46a5&fs=${encodeURIComponent(source.fs)}&fields=${source.fields}&fid=f3&pn=${page}&pz=${pageSize}&po=1&dect=1&_=${Date.now()}`;
+              response = await fetch(url, {
+                headers: {
+                  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                  'Referer': 'https://quote.eastmoney.com/'
+                }
+              });
+              if (!response.ok) {
+                console.warn(`[DEBUG] 第${page}页请求失败: HTTP ${response.status}，剩余重试${retries-1}次`);
+                retries--;
+                if (retries > 0) await new Promise(r => setTimeout(r, 500));
+                continue;
+              }
+              data = await response.json();
+              const pageData = source.parse(data);
+              if (pageData && pageData.length > 0) {
+                allData = allData.concat(pageData);
+                console.log(`[DEBUG] 第${page}/${totalPages}页: +${pageData.length}条，累计${allData.length}条`);
+              }
+              success = true;
+            } catch (e) {
+              console.warn(`[DEBUG] 第${page}页错误: ${e.message}，剩余重试${retries-1}次`);
+              retries--;
+              if (retries > 0) await new Promise(r => setTimeout(r, 500));
             }
-          });
-          if (!response.ok) throw new Error(`HTTP ${response.status}`);
-          data = await response.json();
-          const pageData = source.parse(data);
-          if (!pageData || pageData.length === 0) break;
-          allData = allData.concat(pageData);
-          console.log(`[DEBUG] 第${page}/${totalPages}页: +${pageData.length}条，累计${allData.length}条`);
+          }
+          if (!success) {
+            console.warn(`[DEBUG] 第${page}页最终失败，跳过`);
+          }
+          // 每10页暂停一下
+          if (page % 10 === 0) {
+            await new Promise(r => setTimeout(r, 200));
+          }
         }
 
         console.log(`[DEBUG] 东方财富总计获取: ${allData.length}/${total} 只股票`);
@@ -2209,7 +2241,7 @@ async function fetchAllStocks() {
             console.warn(`[DEBUG] 腾讯第${i+1}批失败: HTTP ${response.status}`);
             continue;
           }
-          const text = await response.text();
+          const text = await decodeText(response, currentEncoding);
           const batchData = source.parse(text);
           if (batchData && batchData.length > 0) {
             allData = allData.concat(batchData);
@@ -2336,6 +2368,27 @@ async function fetchMarketIndices() {
       });
     } catch (e2) { console.log('备用指数也失败:', e2.message); }
   }
+}
+
+// 编码设置
+let currentEncoding = 'utf-8';
+function changeEncoding(enc) {
+  currentEncoding = enc;
+  console.log(`[DEBUG] 切换编码为: ${enc}`);
+  // 重新获取数据
+  allStocks = [];
+  init();
+}
+
+// 使用指定编码解析文本
+async function decodeText(response, encoding) {
+  if (encoding === 'utf-8') {
+    return await response.text();
+  }
+  // GBK/GB2312解码
+  const buffer = await response.arrayBuffer();
+  const decoder = new TextDecoder(encoding, { fatal: false });
+  return decoder.decode(buffer);
 }
 
 // 更新API状态显示
