@@ -3666,7 +3666,17 @@ function toggleConceptPanel() {
   const panel = document.getElementById('conceptPanel');
   panel.classList.toggle('active');
   document.querySelector('.toggle-concept-btn').classList.toggle('active', panel.classList.contains('active'));
-  if (panel.classList.contains('active')) renderConceptGrid();
+  if (panel.classList.contains('active')) {
+    renderConceptGrid();
+  } else {
+    // 收起面板时，取消板块选中状态
+    activeConcept = null;
+    document.querySelectorAll('.concept-chip').forEach(el => el.classList.remove('active'));
+    // 恢复策略列表的边框样式
+    document.querySelectorAll('.strategy-item').forEach(el => {
+      el.style.borderLeft = '';
+    });
+  }
 }
 
 function renderConceptGrid() {
