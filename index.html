@@ -2320,7 +2320,15 @@ function updateApiStatus(status, source, latency) {
 // ---- 策略筛选引擎 ----
 function runStrategy(strategy) {
   if (!allStocks.length) return [];
-  return allStocks.filter(s => strategy.filter(s)).sort(strategy.sort);
+  // 如果有活跃板块限制，只在该板块内筛选
+  let baseStocks = allStocks;
+  if (activeConcept) {
+    const concept = CONCEPTS.find(c => c.id === activeConcept);
+    if (concept) {
+      baseStocks = allStocks.filter(s => concept.codes.includes(s.code));
+    }
+  }
+  return baseStocks.filter(s => strategy.filter(s)).sort(strategy.sort);
 }
 
 // ---- UI渲染模块 ----
