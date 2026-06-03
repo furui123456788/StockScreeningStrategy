@@ -1057,7 +1057,7 @@ body.multi-mode .strategy-item.selected { border-color: var(--accent-blue); back
     <!-- Footer -->
     <div class="footer">
       <span>⚠️ 免责声明：本工具仅供学习研究，不构成任何投资建议。股市有风险，投资需谨慎。</span>
-      <span>数据来源: <a href="https://www.eastmoney.com" target="_blank">东方财富</a> | API延迟: ~200ms</span>
+      <span>数据源: <span id="footerDataSource">东方财富</span> | API延迟: <span id="footerLatency">~200ms</span></span>
     </div>
   </main>
 </div>
@@ -2092,7 +2092,7 @@ const SINA_SOURCE = {
         code: code.replace(/^(sh|sz|bj)/, ''),
         name: fields[0] || '',
         price: parseFloat(fields[1]) || 0,
-        changePercent: 0,
+        changePercent: (parseFloat(fields[0]) || 0) > 0 ? ((parseFloat(fields[1]) - parseFloat(fields[0])) / parseFloat(fields[0])) : 0,
         changeAmount: parseFloat(fields[2]) || 0,
         volume: parseInt(fields[4]) || 0,
         amount: parseInt(fields[5]) || 0,
@@ -2127,7 +2127,7 @@ const DATA_SOURCES = [
           code: code,
           name: item.f14 || '',
           price: item.f2 || 0,
-          changePercent: item.f3 || 0,
+          changePercent: (item.f3 || 0) / 100,
           changeAmount: item.f4 || 0,
           volume: item.f5 || 0,
           amount: item.f6 || 0,
@@ -2172,7 +2172,7 @@ const DATA_SOURCES = [
           code: code.replace(/^(sh|sz|bj)/, ''),
           name: fields[1] || '',
           price: parseFloat(fields[3]) || 0,
-          changePercent: parseFloat(fields[5]) || 0,
+          changePercent: (parseFloat(fields[5]) || 0) / 100,
           changeAmount: parseFloat(fields[4]) || 0,
           volume: parseInt(fields[6]) || 0,
           amount: parseInt(fields[7]) || 0,
@@ -2431,12 +2431,18 @@ function updateApiStatus(status, source, latency) {
   const lat = document.getElementById('apiLatency');
   const time = document.getElementById('updateTime');
   const provider = document.getElementById('apiProvider');
+  const footerSource = document.getElementById('footerDataSource');
+  const footerLatency = document.getElementById('footerLatency');
 
   dot.className = `api-dot ${status === 'online' ? 'online' : status === 'demo' ? 'loading' : status === 'error' ? 'offline' : 'loading'}`;
   src.textContent = status === 'online' ? `${source} 已连接` : status === 'demo' ? `⚠️ ${source}` : status === 'error' ? `${source} 连接失败` : '连接中...';
   lat.textContent = `${latency}ms`;
   time.textContent = new Date().toLocaleTimeString('zh-CN', { hour12: false });
   provider.textContent = source;
+  
+  // 同步更新底部显示
+  if (footerSource) footerSource.textContent = source;
+  if (footerLatency) footerLatency.textContent = `${latency}ms`;
 }
 
 // ---- 策略筛选引擎 ----
