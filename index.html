@@ -836,6 +836,48 @@ body.multi-mode .strategy-item.selected { border-color: var(--accent-blue); back
   font-size: 12px;
 }
 .toggle-multi-btn.active { background: var(--accent-blue); color: #fff; border-color: var(--accent-blue); }
+
+/* ---- 概念板块 ---- */
+.concept-panel {
+  display: none;
+  padding: 10px 16px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+  max-height: 300px;
+  overflow-y: auto;
+}
+.concept-panel.active { display: block; }
+.concept-panel h4 { font-size: 13px; color: var(--text-muted); margin-bottom: 8px; }
+.concept-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+.concept-chip {
+  padding: 5px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  font-size: 11px;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s;
+}
+.concept-chip:hover { border-color: var(--accent-blue); color: var(--accent-blue); }
+.concept-chip.active { background: var(--accent-blue); color: #fff; border-color: var(--accent-blue); }
+.concept-chip .concept-count { font-size: 10px; opacity: 0.7; }
+.toggle-concept-btn {
+  padding: 4px 10px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: var(--bg-primary);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 12px;
+  margin-left: 8px;
+}
+.toggle-concept-btn.active { background: var(--accent-purple); color: #fff; border-color: var(--accent-purple); }
 </style>
 </head>
 <body>
@@ -881,7 +923,7 @@ body.multi-mode .strategy-item.selected { border-color: var(--accent-blue); back
   <!-- Sidebar -->
   <aside class="sidebar">
     <div class="sidebar-header">
-      <h2>📊 策略列表 (30)</h2>
+      <h2>📊 策略列表 (42)</h2>
       <div class="filter-tabs">
         <button class="filter-tab active" onclick="filterStrategies('all')">全部</button>
         <button class="filter-tab" onclick="filterStrategies('stable')">稳定型</button>
@@ -894,7 +936,12 @@ body.multi-mode .strategy-item.selected { border-color: var(--accent-blue); back
     </div>
     <div class="search-box">
       <input type="text" class="search-input" placeholder="🔍 搜索策略名称..." oninput="searchStrategies(this.value)">
-      <button class="toggle-multi-btn" onclick="toggleMultiMode()" title="多策略交集筛选">🔲 多选模式</button>
+      <button class="toggle-multi-btn" onclick="toggleMultiMode()" title="多策略交集筛选">🔲 多选</button>
+      <button class="toggle-concept-btn" onclick="toggleConceptPanel()" title="概念板块">📂 板块</button>
+    </div>
+    <div class="concept-panel" id="conceptPanel">
+      <h4>📂 热门概念板块</h4>
+      <div class="concept-grid" id="conceptGrid"></div>
     </div>
     <div class="multi-select-bar" id="multiSelectBar">
       <span class="selected-count" id="selectedCount">已选 0 个策略</span>
@@ -1782,8 +1829,215 @@ const STRATEGIES = [
       return s.changePercent > 3 && s.changePercent < 9 && s.turnoverRate > 2 && s.amount > 10000;
     },
     sort: (a, b) => b.changePercent - a.changePercent
+  },
+  // ========== 概念板块策略 ==========
+  {
+    id: 31,
+    name: 'PCB概念强势股',
+    desc: 'PCB(印制电路板)概念板块中，受益于AI服务器、汽车电子、5G通信等需求爆发，筛选板块内量价配合良好的强势股。PCB是电子产业之母，AI算力升级推动高端PCB需求激增。',
+    tags: ['aggressive', 'short', 'mid'],
+    rank: 'S',
+    period: '短线-中线（1-8周）',
+    risk: '中高',
+    winRate: '55-60%',
+    logic: 'AI服务器PCB价值量是传统服务器3-5倍，英伟达/AMD等大厂持续扩产带动产业链景气。筛选板块内放量上涨、资金持续流入的标的。',
+    dataReq: '概念板块归属+量价数据+资金流向',
+    filter: (s) => {
+      return PCB_CODES.includes(s.code) && s.changePercent > 1 && s.turnoverRate > 2 && s.amount > 10000;
+    },
+    sort: (a, b) => b.changePercent - a.changePercent
+  },
+  {
+    id: 32,
+    name: '人工智能AI概念',
+    desc: '人工智能概念板块，覆盖AI芯片、大模型、算力、应用等全链条。AI是新一轮科技革命核心驱动力，政策+资本双轮驱动。',
+    tags: ['aggressive', 'short', 'mid', 'long'],
+    rank: 'A',
+    period: '中线-长线（2-12周）',
+    risk: '中高',
+    winRate: '50-58%',
+    logic: 'AI产业处于爆发期，大模型迭代加速，算力需求指数级增长。筛选AI概念中技术领先、订单饱满的标的。',
+    dataReq: '概念板块归属+量价数据+业绩预期',
+    filter: (s) => {
+      return AI_CODES.includes(s.code) && s.changePercent > 0 && s.turnoverRate > 1.5 && s.amount > 10000;
+    },
+    sort: (a, b) => b.amount - a.amount
+  },
+  {
+    id: 33,
+    name: '半导体芯片国产替代',
+    desc: '半导体芯片概念，聚焦国产替代核心标的。中美科技博弈背景下，半导体自主可控是国家战略，设备/材料/设计环节替代空间巨大。',
+    tags: ['stable', 'mid', 'long', 'value'],
+    rank: 'A',
+    period: '中线-长线（1-6个月）',
+    risk: '中低',
+    winRate: '55-62%',
+    logic: '半导体国产化率不足20%，设备/材料/EDA等环节替代空间巨大。政策扶持+产业资本涌入，长期景气确定。',
+    dataReq: '概念板块归属+财务指标+研发强度',
+    filter: (s) => {
+      return CHIP_CODES.includes(s.code) && s.changePercent > -1 && s.changePercent < 5 && s.turnoverRate > 0.5 && s.amount > 10000 && s.price > 10;
+    },
+    sort: (a, b) => b.amount - a.amount
+  },
+  {
+    id: 34,
+    name: '新能源光伏反弹',
+    desc: '新能源光伏概念，筛选超跌反弹标的。光伏行业经历深度调整后，龙头估值处于历史低位，存在估值修复机会。',
+    tags: ['aggressive', 'short', 'mid'],
+    rank: 'B',
+    period: '短线-中线（2-6周）',
+    risk: '中高',
+    winRate: '48-55%',
+    logic: '光伏产能过剩导致价格战，但全球装机需求仍保持20%+增长。行业洗牌后龙头集中度提升，超跌反弹概率增加。',
+    dataReq: '概念板块归属+量价数据+估值水平',
+    filter: (s) => {
+      return SOLAR_CODES.includes(s.code) && s.changePercent > 0 && s.changePercent < 6 && s.turnoverRate > 1 && s.amount > 10000;
+    },
+    sort: (a, b) => b.changePercent - a.changePercent
+  },
+  {
+    id: 35,
+    name: '机器人概念爆发',
+    desc: '机器人概念板块，覆盖人形机器人、工业机器人、减速器、传感器等。特斯拉Optimus量产在即，机器人产业迎来从0到1的突破。',
+    tags: ['aggressive', 'short', 'mid'],
+    rank: 'A',
+    period: '短线-中线（1-6周）',
+    risk: '高',
+    winRate: '50-58%',
+    logic: '人形机器人是AI落地的终极场景，特斯拉/华为/小米等巨头入局。核心零部件（减速器、丝杠、传感器）供不应求。',
+    dataReq: '概念板块归属+量价数据+订单预期',
+    filter: (s) => {
+      return ROBOT_CODES.includes(s.code) && s.changePercent > 1 && s.turnoverRate > 3 && s.amount > 10000;
+    },
+    sort: (a, b) => b.turnoverRate - a.turnoverRate
+  },
+  {
+    id: 36,
+    name: '低空经济飞行器',
+    desc: '低空经济概念，覆盖eVTOL(电动垂直起降飞行器)、无人机、空管系统等。政策放开低空空域，万亿级新赛道开启。',
+    tags: ['aggressive', 'short', 'mid'],
+    rank: 'A',
+    period: '短线-中线（2-8周）',
+    risk: '高',
+    winRate: '48-55%',
+    logic: '低空经济写入政府工作报告，深圳/合肥等城市率先试点。eVTOL适航认证加速，商业化运营在即。',
+    dataReq: '概念板块归属+量价数据+政策催化',
+    filter: (s) => {
+      return LOWALT_CODES.includes(s.code) && s.changePercent > 0 && s.turnoverRate > 2 && s.amount > 10000;
+    },
+    sort: (a, b) => b.changePercent - a.changePercent
+  },
+  {
+    id: 37,
+    name: '创新药Biotech',
+    desc: '创新药概念板块，筛选研发管线丰富、临床进展顺利的Biotech公司。医保谈判常态化，创新药支付环境改善。',
+    tags: ['stable', 'mid', 'long', 'value'],
+    rank: 'A',
+    period: '中线-长线（1-6个月）',
+    risk: '中高',
+    winRate: '50-58%',
+    logic: '创新药出海（License-out）金额屡创新高，ADC/双抗/细胞治疗等技术突破。筛选管线价值高、现金充裕的标的。',
+    dataReq: '概念板块归属+财务指标+研发管线',
+    filter: (s) => {
+      return PHARMA_CODES.includes(s.code) && s.changePercent > -2 && s.changePercent < 5 && s.turnoverRate > 0.3 && s.amount > 10000;
+    },
+    sort: (a, b) => b.amount - a.amount
+  },
+  {
+    id: 38,
+    name: '固态电池突破',
+    desc: '固态电池概念，覆盖电解质、正负极材料、设备等环节。固态电池能量密度翻倍+安全性大幅提升，是下一代电池技术方向。',
+    tags: ['aggressive', 'mid', 'long'],
+    rank: 'B',
+    period: '中线-长线（1-6个月）',
+    risk: '高',
+    winRate: '45-52%',
+    logic: '丰田/宁德时代/比亚迪等巨头加速固态电池产业化，2027年有望量产。技术突破将重塑动力电池格局。',
+    dataReq: '概念板块归属+量价数据+技术进展',
+    filter: (s) => {
+      return SOLIDBAT_CODES.includes(s.code) && s.changePercent > 0 && s.turnoverRate > 1.5 && s.amount > 10000;
+    },
+    sort: (a, b) => b.changePercent - a.changePercent
+  },
+  {
+    id: 39,
+    name: '商业航天卫星',
+    desc: '商业航天概念，覆盖卫星制造、火箭发射、地面设备等。SpaceX星链成功验证商业模式，中国星网集团加速组网。',
+    tags: ['aggressive', 'mid', 'long'],
+    rank: 'B',
+    period: '中线-长线（2-12周）',
+    risk: '高',
+    winRate: '45-55%',
+    logic: '中国星网计划发射1.3万颗低轨卫星，GW星座和G60星链加速推进。卫星互联网是6G核心基础设施。',
+    dataReq: '概念板块归属+量价数据+订单情况',
+    filter: (s) => {
+      return SPACE_CODES.includes(s.code) && s.changePercent > 0 && s.turnoverRate > 1.5 && s.amount > 10000;
+    },
+    sort: (a, b) => b.amount - a.amount
+  },
+  {
+    id: 40,
+    name: '智能驾驶产业链',
+    desc: '智能驾驶概念，覆盖激光雷达、域控制器、高精度地图、线控底盘等。L3级自动驾驶政策落地，城市NOA加速普及。',
+    tags: ['aggressive', 'mid', 'long'],
+    rank: 'A',
+    period: '中线-长线（1-6个月）',
+    risk: '中高',
+    winRate: '52-60%',
+    logic: '华为ADS/小鹏XNGP/蔚来NOP+等智驾系统快速迭代，激光雷达成本大幅下降至千元级。智驾渗透率从5%向50%跨越。',
+    dataReq: '概念板块归属+量价数据+定点订单',
+    filter: (s) => {
+      return AUTODRIVE_CODES.includes(s.code) && s.changePercent > 0 && s.turnoverRate > 1.5 && s.amount > 10000 && s.price > 5;
+    },
+    sort: (a, b) => b.amount - a.amount
+  },
+  {
+    id: 41,
+    name: '数据中心液冷',
+    desc: '数据中心液冷概念，AI算力爆发推动数据中心功耗激增，传统风冷无法满足散热需求，液冷技术渗透率快速提升。',
+    tags: ['aggressive', 'short', 'mid'],
+    rank: 'A',
+    period: '短线-中线（2-8周）',
+    risk: '中高',
+    winRate: '52-58%',
+    logic: '英伟达B200功耗达1000W，单机柜功率突破100kW，液冷成为必选项。预计2025年液冷渗透率从10%提升至30%。',
+    dataReq: '概念板块归属+量价数据+订单预期',
+    filter: (s) => {
+      return LIQUIDC_CODES.includes(s.code) && s.changePercent > 1 && s.turnoverRate > 2 && s.amount > 10000;
+    },
+    sort: (a, b) => b.changePercent - a.changePercent
+  },
+  {
+    id: 42,
+    name: '跨境支付CIPS',
+    desc: '跨境支付概念，人民币国际化加速，CIPS系统覆盖范围扩大，数字货币跨境应用推进。去美元化趋势下跨境支付迎来机遇。',
+    tags: ['stable', 'mid', 'long'],
+    rank: 'B',
+    period: '中线-长线（1-6个月）',
+    risk: '中低',
+    winRate: '50-55%',
+    logic: 'CIPS处理金额年增40%+，金砖国家本币结算比例提升。数字货币桥项目连接多国央行，跨境支付基础设施升级。',
+    dataReq: '概念板块归属+量价数据+政策催化',
+    filter: (s) => {
+      return CROSSPAY_CODES.includes(s.code) && s.changePercent > -1 && s.changePercent < 4 && s.turnoverRate > 0.5 && s.amount > 10000;
+    },
+    sort: (a, b) => b.amount - a.amount
   }
 ];
+
+// ========== 概念板块股票代码定义 ==========
+const PCB_CODES = ['002463','300476','002916','002384','603228','002938','600183','002436','688630','301200','603256','605589','600110','688388','603328','300657','002636'];
+const AI_CODES = ['300033','300059','002230','688111','300418','300364','300496','002405','300308','300502','000938','600756','603000','300226','300624','300678','300188'];
+const CHIP_CODES = ['688981','002371','603501','688012','688082','688032','688072','688008','603893','300661','300223','600584','002156','300046','300672','688525','688019'];
+const SOLAR_CODES = ['601012','600438','002459','688599','300274','600089','002129','601877','603806','688390','300118','002056','600207'];
+const ROBOT_CODES = ['002527','300124','002896','002050','603666','300607','002979','688017','688160','300024','002031','603728'];
+const LOWALT_CODES = ['002151','300900','002097','600893','300411','002013','600372','000768','300775','688070'];
+const PHARMA_CODES = ['600276','603259','300760','688180','688266','688235','688197','688302','688331','688176','300142','300122'];
+const SOLIDBAT_CODES = ['002074','300014','002709','300073','002812','603659','688005','300919','300037','002709'];
+const SPACE_CODES = ['300045','300101','002025','600118','600501','688270','688523','300342','300123'];
+const AUTODRIVE_CODES = ['002906','002920','300496','002405','688327','688322','002036','300552','300598','002413'];
+const LIQUIDC_CODES = ['002837','300499','300017','002335','300990','301018','300249','603912'];
+const CROSSPAY_CODES = ['300130','002657','300339','600570','300663','300386','002537','300468'];
 
 // ---- 多数据源配置 ----
 const DATA_SOURCES = [
@@ -2953,6 +3207,95 @@ function fmtMoney(v) {
   if (abs >= 100000000) return (v / 100000000).toFixed(2) + '亿';
   if (abs >= 10000) return (v / 10000).toFixed(2) + '万';
   return v.toFixed(0);
+}
+
+// ========== 概念板块功能 ==========
+const CONCEPTS = [
+  { id: 'pcb', name: 'PCB', codes: PCB_CODES, color: '#4a90d9' },
+  { id: 'ai', name: '人工智能', codes: AI_CODES, color: '#e74c3c' },
+  { id: 'chip', name: '半导体芯片', codes: CHIP_CODES, color: '#f39c12' },
+  { id: 'solar', name: '光伏新能源', codes: SOLAR_CODES, color: '#2ecc71' },
+  { id: 'robot', name: '机器人', codes: ROBOT_CODES, color: '#9b59b6' },
+  { id: 'lowalt', name: '低空经济', codes: LOWALT_CODES, color: '#1abc9c' },
+  { id: 'pharma', name: '创新药', codes: PHARMA_CODES, color: '#e67e22' },
+  { id: 'solidbat', name: '固态电池', codes: SOLIDBAT_CODES, color: '#3498db' },
+  { id: 'space', name: '商业航天', codes: SPACE_CODES, color: '#34495e' },
+  { id: 'autodrive', name: '智能驾驶', codes: AUTODRIVE_CODES, color: '#16a085' },
+  { id: 'liquidc', name: '数据中心液冷', codes: LIQUIDC_CODES, color: '#2980b9' },
+  { id: 'crosspay', name: '跨境支付', codes: CROSSPAY_CODES, color: '#8e44ad' }
+];
+
+let activeConcept = null;
+
+function toggleConceptPanel() {
+  const panel = document.getElementById('conceptPanel');
+  panel.classList.toggle('active');
+  document.querySelector('.toggle-concept-btn').classList.toggle('active', panel.classList.contains('active'));
+  if (panel.classList.contains('active')) renderConceptGrid();
+}
+
+function renderConceptGrid() {
+  const grid = document.getElementById('conceptGrid');
+  grid.innerHTML = CONCEPTS.map(c => {
+    const count = allStocks.filter(s => c.codes.includes(s.code)).length;
+    return `<div class="concept-chip ${activeConcept === c.id ? 'active' : ''}" onclick="selectConcept('${c.id}')">
+      ${c.name}<br><span class="concept-count">${count}只</span>
+    </div>`;
+  }).join('');
+}
+
+function selectConcept(conceptId) {
+  if (activeConcept === conceptId) {
+    activeConcept = null;
+    document.querySelectorAll('.concept-chip').forEach(el => el.classList.remove('active'));
+    // 恢复显示全部策略
+    renderStrategyList();
+    return;
+  }
+  activeConcept = conceptId;
+  document.querySelectorAll('.concept-chip').forEach(el => el.classList.remove('active'));
+  event.target.closest('.concept-chip').classList.add('active');
+
+  const concept = CONCEPTS.find(c => c.id === conceptId);
+  if (!concept) return;
+
+  // 筛选出该板块的股票
+  const conceptStocks = allStocks.filter(s => concept.codes.includes(s.code));
+
+  // 更新主内容区显示板块股票
+  document.getElementById('contentTitle').textContent = `📂 ${concept.name}板块 (${conceptStocks.length}只)`;
+
+  // 显示板块股票列表
+  filteredStocks = conceptStocks;
+  renderStockTable(conceptStocks);
+  updateStats(conceptStocks);
+
+  // 同时显示该板块相关的策略
+  const relatedStrategies = STRATEGIES.filter(s => {
+    if (conceptId === 'pcb' && s.name.includes('PCB')) return true;
+    if (conceptId === 'ai' && s.name.includes('AI')) return true;
+    if (conceptId === 'chip' && s.name.includes('芯片')) return true;
+    if (conceptId === 'solar' && s.name.includes('光伏')) return true;
+    if (conceptId === 'robot' && s.name.includes('机器人')) return true;
+    if (conceptId === 'lowalt' && s.name.includes('低空')) return true;
+    if (conceptId === 'pharma' && s.name.includes('创新药')) return true;
+    if (conceptId === 'solidbat' && s.name.includes('固态')) return true;
+    if (conceptId === 'space' && s.name.includes('航天')) return true;
+    if (conceptId === 'autodrive' && s.name.includes('智能驾驶')) return true;
+    if (conceptId === 'liquidc' && s.name.includes('液冷')) return true;
+    if (conceptId === 'crosspay' && s.name.includes('跨境')) return true;
+    return false;
+  });
+
+  // 在策略列表中高亮相关策略
+  document.querySelectorAll('.strategy-item').forEach(el => {
+    const id = parseInt(el.getAttribute('onclick')?.match(/\d+/)?.[0]);
+    if (relatedStrategies.some(s => s.id === id)) {
+      el.style.borderLeft = `3px solid ${concept.color}`;
+    } else {
+      el.style.borderLeft = '';
+    }
+  });
 }
 </script>
 <!-- 个股详情弹窗 -->
