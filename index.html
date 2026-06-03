@@ -2143,11 +2143,29 @@ async function fetchAllStocks() {
       let url, response, data;
 
       if (source.id === 'eastmoney') {
-        // 分页获取全部A股数据（每页5000，最多6页覆盖30000只）
+        // 第一步：先请求1条获取total总数
+        url = `${source.baseUrl}?np=1&fltt=2&invt=2&ut=b2884a393a59ad64002292a3e90d46a5&fs=${encodeURIComponent(source.fs)}&fields=${source.fields}&fid=f3&pn=1&pz=1&po=1&dect=1&_=${Date.now()}`;
+        console.log(`[DEBUG] 获取总数: ${url.substring(0, 100)}...`);
+        response = await fetch(url, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+            'Referer': 'https://quote.eastmoney.com/'
+          }
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        data = await response.json();
+        const total = data?.data?.total || 0;
+        console.log(`[DEBUG] 东方财富总股票数: ${total}`);
+        if (total === 0) throw new Error('total为0');
+
+        // 第二步：循环分页，每次100条，获取全部
         let allData = [];
-        for (let page = 1; page <= 6; page++) {
-          url = `${source.baseUrl}?np=1&fltt=2&invt=2&ut=b2884a393a59ad64002292a3e90d46a5&fs=${encodeURIComponent(source.fs)}&fields=${source.fields}&fid=f3&pn=${page}&pz=5000&po=1&dect=1&_=${Date.now()}`;
-          console.log(`[DEBUG] 请求第${page}页: ${url.substring(0, 120)}...`);
+        const pageSize = 100;
+        const totalPages = Math.ceil(total / pageSize);
+        console.log(`[DEBUG] 需要请求 ${totalPages} 页，每页${pageSize}条`);
+
+        for (let page = 1; page <= totalPages; page++) {
+          url = `${source.baseUrl}?np=1&fltt=2&invt=2&ut=b2884a393a59ad64002292a3e90d46a5&fs=${encodeURIComponent(source.fs)}&fields=${source.fields}&fid=f3&pn=${page}&pz=${pageSize}&po=1&dect=1&_=${Date.now()}`;
           response = await fetch(url, {
             headers: {
               'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
@@ -2156,17 +2174,13 @@ async function fetchAllStocks() {
           });
           if (!response.ok) throw new Error(`HTTP ${response.status}`);
           data = await response.json();
-          console.log(`[DEBUG] 第${page}页原始数据:`, data);
           const pageData = source.parse(data);
-          console.log(`[DEBUG] 第${page}页解析后: ${pageData?.length || 0} 条`);
-          if (pageData && pageData.length > 0) {
-            console.log(`[DEBUG] 样例股票代码:`, pageData.slice(0, 3).map(s => s.code));
-          }
           if (!pageData || pageData.length === 0) break;
           allData = allData.concat(pageData);
-          if (pageData.length < 5000) break;
+          console.log(`[DEBUG] 第${page}/${totalPages}页: +${pageData.length}条，累计${allData.length}条`);
         }
-        console.log(`[DEBUG] 东方财富总计获取: ${allData.length} 只股票`);
+
+        console.log(`[DEBUG] 东方财富总计获取: ${allData.length}/${total} 只股票`);
         if (allData.length > 0) {
           apiLatencyMs = Date.now() - startTime;
           updateApiStatus('online', source.name, apiLatencyMs);
@@ -2758,72 +2772,134 @@ function showAllStocks() {
 
 // 自定义策略
 let customStrategy = null;
+let customModalActive = false;
+
 function openCustomStrategy() {
-  const params = prompt(`自定义策略筛选参数（用逗号分隔）：
+  // 创建自定义策略表单弹窗
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay active';
+  modal.style.zIndex = '2000';
+  modal.id = 'customStrategyModal';
+  modal.innerHTML = `
+    <div class="modal-box" style="max-width:500px">
+      <button class="modal-close" onclick="closeCustomStrategy()">&times;</button>
+      <div class="modal-title">⚙️ 自定义策略筛选</div>
+      <div style="font-size:13px;color:var(--text-muted);margin-bottom:16px">
+        设置筛选条件（留空则不限制），设置完成后点击"运行筛选"
+      </div>
+      <div style="display:grid;gap:12px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:center">
+          <label style="font-size:12px;color:var(--text-secondary)">涨跌幅 (%)</label>
+          <div style="display:flex;gap:4px;align-items:center">
+            <input type="number" id="csChangeMin" placeholder="最小值" value="-2" style="width:70px;padding:6px;border:1px solid var(--border);border-radius:4px;background:var(--bg-primary);color:var(--text-primary)">
+            <span style="color:var(--text-muted)">~</span>
+            <input type="number" id="csChangeMax" placeholder="最大值" value="5" style="width:70px;padding:6px;border:1px solid var(--border);border-radius:4px;background:var(--bg-primary);color:var(--text-primary)">
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:center">
+          <label style="font-size:12px;color:var(--text-secondary)">换手率 (%)</label>
+          <div style="display:flex;gap:4px;align-items:center">
+            <input type="number" id="csTurnoverMin" placeholder="最小值" value="0.5" style="width:70px;padding:6px;border:1px solid var(--border);border-radius:4px;background:var(--bg-primary);color:var(--text-primary)">
+            <span style="color:var(--text-muted)">~</span>
+            <input type="number" id="csTurnoverMax" placeholder="最大值" value="20" style="width:70px;padding:6px;border:1px solid var(--border);border-radius:4px;background:var(--bg-primary);color:var(--text-primary)">
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:center">
+          <label style="font-size:12px;color:var(--text-secondary)">成交额 (元)</label>
+          <div style="display:flex;gap:4px;align-items:center">
+            <input type="number" id="csAmountMin" placeholder="最小值" value="10000000" style="width:90px;padding:6px;border:1px solid var(--border);border-radius:4px;background:var(--bg-primary);color:var(--text-primary)">
+            <span style="color:var(--text-muted)">~</span>
+            <input type="number" id="csAmountMax" placeholder="最大值" value="" style="width:90px;padding:6px;border:1px solid var(--border);border-radius:4px;background:var(--bg-primary);color:var(--text-primary)">
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:center">
+          <label style="font-size:12px;color:var(--text-secondary)">股价 (元)</label>
+          <div style="display:flex;gap:4px;align-items:center">
+            <input type="number" id="csPriceMin" placeholder="最小值" value="5" style="width:70px;padding:6px;border:1px solid var(--border);border-radius:4px;background:var(--bg-primary);color:var(--text-primary)">
+            <span style="color:var(--text-muted)">~</span>
+            <input type="number" id="csPriceMax" placeholder="最大值" value="200" style="width:70px;padding:6px;border:1px solid var(--border);border-radius:4px;background:var(--bg-primary);color:var(--text-primary)">
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:center">
+          <label style="font-size:12px;color:var(--text-secondary)">振幅 (%)</label>
+          <div style="display:flex;gap:4px;align-items:center">
+            <input type="number" id="csAmplitudeMin" placeholder="最小值" value="" style="width:70px;padding:6px;border:1px solid var(--border);border-radius:4px;background:var(--bg-primary);color:var(--text-primary)">
+            <span style="color:var(--text-muted)">~</span>
+            <input type="number" id="csAmplitudeMax" placeholder="最大值" value="10" style="width:70px;padding:6px;border:1px solid var(--border);border-radius:4px;background:var(--bg-primary);color:var(--text-primary)">
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:20px;display:flex;gap:8px;justify-content:flex-end">
+        <button class="btn" onclick="closeCustomStrategy()">取消</button>
+        <button class="btn btn-success" onclick="runCustomStrategy()">▶ 运行筛选</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  customModalActive = true;
+}
 
-格式: 条件名=最小值,最大值
+function closeCustomStrategy() {
+  const modal = document.getElementById('customStrategyModal');
+  if (modal) modal.remove();
+  customModalActive = false;
+}
 
-示例:
-changePercent=-2,5  (涨跌幅-2%~5%)
-turnoverRate=1,10    (换手率1%~10%)
-amount=10000,500000  (成交额1万~50万)
-price=5,100          (价格5~100元)
+function runCustomStrategy() {
+  const getVal = id => {
+    const el = document.getElementById(id);
+    return el && el.value !== '' ? parseFloat(el.value) : null;
+  };
 
-支持条件: changePercent, turnoverRate, amount, price, amplitude
-
-输入示例: changePercent=-2,5;turnoverRate=1,10;amount=10000,500000`);
-
-  if (!params) return;
-
-  try {
-    const conditions = {};
-    params.split(';').forEach(part => {
-      const [key, range] = part.trim().split('=');
-      if (key && range) {
-        const [min, max] = range.split(',').map(v => parseFloat(v.trim()));
-        conditions[key.trim()] = { min, max };
-      }
-    });
-
-    if (Object.keys(conditions).length === 0) {
-      alert('未识别到有效条件');
-      return;
+  const conditions = {};
+  const getCondition = (id, key) => {
+    const min = getVal(id + 'Min');
+    const max = getVal(id + 'Max');
+    if (min !== null || max !== null) {
+      conditions[key] = { min: min ?? -Infinity, max: max ?? Infinity };
     }
+  };
 
-    customStrategy = {
-      id: 999,
-      name: '自定义策略',
-      desc: `自定义条件: ${Object.entries(conditions).map(([k, v]) => `${k}=${v.min}~${v.max}`).join(', ')}`,
-      tags: ['custom'],
-      rank: 'S',
-      period: '自定义',
-      risk: '自定义',
-      winRate: '-',
-      logic: '用户自定义筛选条件',
-      dataReq: '量价数据',
-      filter: (s) => {
-        for (const [key, range] of Object.entries(conditions)) {
-          const val = s[key];
-          if (val === undefined) return false;
-          if (val < range.min || val > range.max) return false;
-        }
-        return true;
-      },
-      sort: (a, b) => b.amount - a.amount
-    };
+  getCondition('csChange', 'changePercent');
+  getCondition('csTurnover', 'turnoverRate');
+  getCondition('csAmount', 'amount');
+  getCondition('csPrice', 'price');
+  getCondition('csAmplitude', 'amplitude');
 
-    // 添加到策略列表开头
-    const existing = STRATEGIES.find(s => s.id === 999);
-    if (!existing) STRATEGIES.unshift(customStrategy);
-    else existing.filter = customStrategy.filter;
-
-    renderStrategyList();
-    selectStrategy(999);
-    runScreen();
-
-  } catch (e) {
-    alert('参数格式错误: ' + e.message);
+  if (Object.keys(conditions).length === 0) {
+    alert('请至少设置一个筛选条件');
+    return;
   }
+
+  customStrategy = {
+    id: 999,
+    name: '自定义策略',
+    desc: `条件: ${Object.entries(conditions).map(([k, v]) => `${k}:${v.min === -Infinity ? '*' : v.min}~${v.max === Infinity ? '*' : v.max}`).join(', ')}`,
+    tags: ['custom'],
+    rank: 'S',
+    period: '自定义',
+    risk: '自定义',
+    winRate: '-',
+    logic: '用户自定义筛选条件',
+    dataReq: '量价数据',
+    filter: (s) => {
+      for (const [key, range] of Object.entries(conditions)) {
+        const val = s[key];
+        if (val === undefined) return false;
+        if (val < range.min || val > range.max) return false;
+      }
+      return true;
+    },
+    sort: (a, b) => b.amount - a.amount
+  };
+
+  const existing = STRATEGIES.find(s => s.id === 999);
+  if (existing) existing.filter = customStrategy.filter;
+  else STRATEGIES.unshift(customStrategy);
+
+  closeCustomStrategy();
+  selectStrategy(999);
+  runScreen();
 }
 
 function switchKlinePeriod(period, btn) {
