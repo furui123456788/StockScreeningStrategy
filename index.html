@@ -1106,9 +1106,13 @@ const STRATEGIES = [
       <span class="logic-key">涨跌幅</span> <span class="logic-op">&gt;</span> <span class="logic-val">0%</span>
     `,
     filter: (s) => {
-      return s.changePercent > -2 && s.turnoverRate > 0.5 && s.changePercent < 9.5 && s.amount > 5000;
+      return s.changePercent > 0.5 && s.changePercent < 5 &&
+             s.turnoverRate > 3 && s.turnoverRate < 15 &&
+             s.amount > 50000000 &&
+             s.price > 10 && s.price < 100 &&
+             s.amplitude > 1 && s.amplitude < 8;
     },
-    sort: (a, b) => b.amount - a.amount
+    sort: (a, b) => b.turnoverRate - a.turnoverRate
   },
   {
     id: 2, name: '量价背离突破', rank: 'S',
