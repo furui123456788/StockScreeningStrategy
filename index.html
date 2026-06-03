@@ -927,11 +927,13 @@ body.multi-mode .strategy-item.selected { border-color: var(--accent-blue); back
       <span id="apiProvider" style="color:var(--accent-cyan)">东方财富</span>
     </div>
     <div class="api-badge">
-      <span>编码:</span>
-      <select id="encodingSelect" onchange="changeEncoding(this.value)" style="background:var(--bg-primary);color:var(--text-primary);border:1px solid var(--border);border-radius:4px;padding:2px 6px;font-size:12px">
-        <option value="utf-8">UTF-8</option>
-        <option value="gbk">GBK</option>
-        <option value="gb2312">GB2312</option>
+      <span>数据源:</span>
+      <select id="dataSourceSelect" onchange="switchDataSource(this.value)" style="background:var(--bg-primary);color:var(--text-primary);border:1px solid var(--border);border-radius:4px;padding:2px 6px;font-size:12px">
+        <option value="auto">自动选择</option>
+        <option value="eastmoney">东方财富</option>
+        <option value="tencent">腾讯财经</option>
+        <option value="sina">新浪财经</option>
+        <option value="efinance">efinance</option>
       </select>
     </div>
   </div>
@@ -2061,7 +2063,53 @@ const LIQUIDC_CODES = ['002837','300499','300017','002335','300990','301018','30
 const CROSSPAY_CODES = ['300130','002657','300339','600570','300663','300386','002537','300468','300130','002657','300339','600570','300663','300386','002537','300468','300130','002657','300339','600570','300663','300386','002537','300468','300130','002657'];
 
 // ---- 多数据源配置 ----
+
+// ========== 新浪数据源（GBK编码，分批获取） ==========
+const SINA_SOURCE = {
+  id: 'sina',
+  name: '新浪财经',
+  type: 'text',
+  baseUrl: 'https://hq.sinajs.cn/list=',
+  allCodes: (() => {
+    const codes = [];
+    for (let i = 600000; i <= 609999; i++) codes.push('sh' + i);
+    for (let i = 688000; i <= 689999; i++) codes.push('sh' + i);
+    for (let i = 1; i <= 9999; i++) codes.push('sz' + String(i).padStart(6, '0'));
+    for (let i = 300000; i <= 309999; i++) codes.push('sz' + i);
+    return codes;
+  })(),
+  parse: (text) => {
+    const stocks = [];
+    const lines = text.trim().split(';');
+    for (const line of lines) {
+      if (!line.includes('"')) continue;
+      const match = line.match(/(\w+)="([^"]+)"/);
+      if (!match) continue;
+      const code = match[1];
+      const fields = match[2].split(',');
+      if (fields.length < 32) continue;
+      stocks.push({
+        code: code.replace(/^(sh|sz|bj)/, ''),
+        name: fields[0] || '',
+        price: parseFloat(fields[1]) || 0,
+        changePercent: 0,
+        changeAmount: parseFloat(fields[2]) || 0,
+        volume: parseInt(fields[4]) || 0,
+        amount: parseInt(fields[5]) || 0,
+        amplitude: 0,
+        turnoverRate: 0,
+        high: parseFloat(fields[3]) || 0,
+        low: parseFloat(fields[3]) || 0,
+        open: parseFloat(fields[0]) || 0,
+        prevClose: parseFloat(fields[0]) || 0
+      });
+    }
+    return stocks;
+  }
+};
+
 const DATA_SOURCES = [
+  SINA_SOURCE,
   {
     id: 'eastmoney',
     name: '东方财富',
@@ -2146,7 +2194,14 @@ async function fetchAllStocks() {
   const startTime = Date.now();
   let lastError = null;
 
-  for (const source of DATA_SOURCES) {
+  // 如果用户手动指定了数据源，只使用该数据源
+  let sources = DATA_SOURCES;
+  if (forceDataSource && forceDataSource !== 'auto') {
+    const matched = DATA_SOURCES.filter(s => s.id === forceDataSource);
+    if (matched.length > 0) sources = matched;
+  }
+
+  for (const source of sources) {
     try {
       let url, response, data;
 
@@ -2168,47 +2223,35 @@ async function fetchAllStocks() {
 
         // 第二步：循环分页，每次100条，获取全部
         let allData = [];
-        const pageSize = 100;
+        const pageSize = 80;
         const totalPages = Math.ceil(total / pageSize);
         console.log(`[DEBUG] 需要请求 ${totalPages} 页，每页${pageSize}条`);
 
         for (let page = 1; page <= totalPages; page++) {
-          let retries = 3;
-          let success = false;
-          while (retries > 0 && !success) {
-            try {
-              url = `${source.baseUrl}?np=1&fltt=2&invt=2&ut=b2884a393a59ad64002292a3e90d46a5&fs=${encodeURIComponent(source.fs)}&fields=${source.fields}&fid=f3&pn=${page}&pz=${pageSize}&po=1&dect=1&_=${Date.now()}`;
-              response = await fetch(url, {
-                headers: {
-                  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-                  'Referer': 'https://quote.eastmoney.com/'
-                }
-              });
-              if (!response.ok) {
-                console.warn(`[DEBUG] 第${page}页请求失败: HTTP ${response.status}，剩余重试${retries-1}次`);
-                retries--;
-                if (retries > 0) await new Promise(r => setTimeout(r, 500));
-                continue;
+          try {
+            url = `${source.baseUrl}?np=1&fltt=2&invt=2&ut=b2884a393a59ad64002292a3e90d46a5&fs=${encodeURIComponent(source.fs)}&fields=${source.fields}&fid=f3&pn=${page}&pz=${pageSize}&po=1&dect=1&_=${Date.now()}`;
+            response = await fetch(url, {
+              headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                'Referer': 'https://quote.eastmoney.com/'
               }
-              data = await response.json();
-              const pageData = source.parse(data);
-              if (pageData && pageData.length > 0) {
-                allData = allData.concat(pageData);
-                console.log(`[DEBUG] 第${page}/${totalPages}页: +${pageData.length}条，累计${allData.length}条`);
-              }
-              success = true;
-            } catch (e) {
-              console.warn(`[DEBUG] 第${page}页错误: ${e.message}，剩余重试${retries-1}次`);
-              retries--;
-              if (retries > 0) await new Promise(r => setTimeout(r, 500));
+            });
+            if (!response.ok) {
+              console.warn(`[DEBUG] 第${page}页失败，跳过`);
+              continue;
             }
+            data = await response.json();
+            const pageData = source.parse(data);
+            if (pageData && pageData.length > 0) {
+              allData = allData.concat(pageData);
+              console.log(`[DEBUG] 第${page}/${totalPages}页: +${pageData.length}条，累计${allData.length}条`);
+            }
+          } catch (e) {
+            console.warn(`[DEBUG] 第${page}页错误，跳过: ${e.message}`);
           }
-          if (!success) {
-            console.warn(`[DEBUG] 第${page}页最终失败，跳过`);
-          }
-          // 每10页暂停一下
+          // 每10页暂停100ms
           if (page % 10 === 0) {
-            await new Promise(r => setTimeout(r, 200));
+            await new Promise(r => setTimeout(r, 100));
           }
         }
 
@@ -2221,7 +2264,7 @@ async function fetchAllStocks() {
         } else {
           throw new Error('返回数据为空');
         }
-      } else if (source.id === 'tencent') {
+      } else if (source.id === 'tencent' || source.id === 'sina') {
         // 分批获取，每次100只
         const allCodes = source.allCodes;
         const batchSize = 100;
@@ -2241,7 +2284,9 @@ async function fetchAllStocks() {
             console.warn(`[DEBUG] 腾讯第${i+1}批失败: HTTP ${response.status}`);
             continue;
           }
-          const text = await decodeText(response, currentEncoding);
+          // 腾讯API返回GBK编码，强制用GBK解码
+              const buf = await response.arrayBuffer();
+              const text = new TextDecoder('gbk', {fatal: false}).decode(buf);
           const batchData = source.parse(text);
           if (batchData && batchData.length > 0) {
             allData = allData.concat(batchData);
@@ -2370,25 +2415,13 @@ async function fetchMarketIndices() {
   }
 }
 
-// 编码设置
-let currentEncoding = 'utf-8';
-function changeEncoding(enc) {
-  currentEncoding = enc;
-  console.log(`[DEBUG] 切换编码为: ${enc}`);
-  // 重新获取数据
+// 数据源手动切换
+let forceDataSource = 'auto';
+function switchDataSource(val) {
+  forceDataSource = val;
+  console.log(`[DEBUG] 手动切换数据源: ${val}`);
   allStocks = [];
   init();
-}
-
-// 使用指定编码解析文本
-async function decodeText(response, encoding) {
-  if (encoding === 'utf-8') {
-    return await response.text();
-  }
-  // GBK/GB2312解码
-  const buffer = await response.arrayBuffer();
-  const decoder = new TextDecoder(encoding, { fatal: false });
-  return decoder.decode(buffer);
 }
 
 // 更新API状态显示
