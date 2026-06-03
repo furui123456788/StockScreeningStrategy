@@ -2141,15 +2141,31 @@ async function fetchAllStocks() {
       let url, response, data;
 
       if (source.id === 'eastmoney') {
-        url = `${source.baseUrl}?np=1&fltt=2&invt=2&ut=b2884a393a59ad64002292a3e90d46a5&fs=${encodeURIComponent(source.fs)}&fields=${source.fields}&fid=f3&pn=1&pz=5000&po=1&dect=1&_=${Date.now()}`;
-        response = await fetch(url, {
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-            'Referer': 'https://quote.eastmoney.com/'
-          }
-        });
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        data = await response.json();
+        // 分页获取全部A股数据（每页5000，最多6页覆盖30000只）
+        let allData = [];
+        for (let page = 1; page <= 6; page++) {
+          url = `${source.baseUrl}?np=1&fltt=2&invt=2&ut=b2884a393a59ad64002292a3e90d46a5&fs=${encodeURIComponent(source.fs)}&fields=${source.fields}&fid=f3&pn=${page}&pz=5000&po=1&dect=1&_=${Date.now()}`;
+          response = await fetch(url, {
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+              'Referer': 'https://quote.eastmoney.com/'
+            }
+          });
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          data = await response.json();
+          const pageData = source.parse(data);
+          if (!pageData || pageData.length === 0) break; // 没有更多数据
+          allData = allData.concat(pageData);
+          if (pageData.length < 5000) break; // 最后一页不足5000，说明已全部获取
+        }
+        if (allData.length > 0) {
+          apiLatencyMs = Date.now() - startTime;
+          updateApiStatus('online', source.name, apiLatencyMs);
+          console.log(`✅ 数据源 ${source.name} 成功，获取 ${allData.length} 只股票`);
+          return allData;
+        } else {
+          throw new Error('返回数据为空');
+        }
       } else if (source.id === 'sina' || source.id === 'tencent') {
         url = `${source.baseUrl}${source.codes}`;
         response = await fetch(url, {
