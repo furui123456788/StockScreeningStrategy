@@ -2467,6 +2467,12 @@ function runStrategy(strategy) {
 
 // ---- UI渲染模块 ----
 
+// 多选模式变量（必须在renderStrategyList之前声明）
+let selectedStrategies = new Set();
+let multiMode = false;
+let activeConcept = null;
+let customStrategy = null;
+
 // 渲染策略列表
 function renderStrategyList(filter = 'all', search = '') {
   const list = document.getElementById('strategyList');
@@ -2913,7 +2919,6 @@ function showAllStocks() {
 }
 
 // 自定义策略
-let customStrategy = null;
 let customModalActive = false;
 
 function openCustomStrategy() {
@@ -3506,8 +3511,6 @@ function renderPredictions(kline, ff) {
 }
 
 // ========== 多策略选择功能 ==========
-let multiMode = false;
-let selectedStrategies = new Set();
 
 function toggleMultiMode() {
   multiMode = !multiMode;
@@ -3621,8 +3624,6 @@ const CONCEPTS = [
   { id: 'liquidc', name: '数据中心液冷', codes: LIQUIDC_CODES, color: '#2980b9' },
   { id: 'crosspay', name: '跨境支付', codes: CROSSPAY_CODES, color: '#8e44ad' }
 ];
-
-let activeConcept = null;
 
 function toggleConceptPanel() {
   const panel = document.getElementById('conceptPanel');
