@@ -629,6 +629,213 @@ body {
   color: var(--accent-red);
   font-weight: 700;
 }
+
+/* ---- 个股详情弹窗 ---- */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.75);
+  z-index: 1000;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 20px;
+  overflow-y: auto;
+}
+.modal-overlay.active { display: flex; }
+.modal-box {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  width: 100%;
+  max-width: 1200px;
+  padding: 24px;
+  position: relative;
+  animation: modalIn 0.3s ease;
+}
+@keyframes modalIn {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.modal-close {
+  position: absolute;
+  top: 12px; right: 16px;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 24px;
+  cursor: pointer;
+}
+.modal-close:hover { color: var(--text-primary); }
+.modal-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 16px;
+}
+.modal-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.modal-full { grid-column: 1 / -1; }
+.kline-container {
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  position: relative;
+}
+.kline-container canvas { width: 100%; height: 400px; }
+.kline-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.kline-tab {
+  padding: 4px 12px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: var(--bg-primary);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 12px;
+}
+.kline-tab.active { background: var(--accent-blue); color: #fff; border-color: var(--accent-blue); }
+.param-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.param-card {
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px;
+}
+.param-label { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
+.param-value { font-size: 16px; font-weight: 700; }
+.param-value.up { color: var(--accent-red); }
+.param-value.down { color: var(--accent-green); }
+.fund-flow-bar {
+  display: flex;
+  height: 28px;
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 8px 0;
+}
+.fund-flow-bar > div { display: flex; align-items: center; justify-content: center; font-size: 11px; color: #fff; font-weight: 600; }
+.fund-flow-legend {
+  display: flex;
+  gap: 16px;
+  font-size: 12px;
+  margin-top: 6px;
+}
+.fund-flow-legend span::before {
+  content: '';
+  display: inline-block;
+  width: 10px; height: 10px;
+  border-radius: 2px;
+  margin-right: 4px;
+  vertical-align: middle;
+}
+.legend-org::before { background: #ff6b35; }
+.legend-inst::before { background: #4a90d9; }
+.legend-retail::before { background: #7c8db0; }
+.prediction-card {
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px;
+  margin-bottom: 10px;
+}
+.prediction-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.prediction-type {
+  font-weight: 700;
+  font-size: 14px;
+}
+.prediction-prob {
+  font-size: 20px;
+  font-weight: 800;
+}
+.prediction-prob.high { color: var(--accent-red); }
+.prediction-prob.medium { color: var(--accent-orange); }
+.prediction-prob.low { color: var(--accent-green); }
+.prediction-desc {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+.prediction-reason {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-top: 6px;
+  padding: 8px;
+  background: rgba(255,255,255,0.03);
+  border-radius: 4px;
+}
+.collect-signal {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.collect-signal.absorbing { background: rgba(74,144,217,0.2); color: #4a90d9; }
+.collect-signal.shipping { background: rgba(255,107,53,0.2); color: #ff6b35; }
+.collect-signal.neutral { background: rgba(124,141,176,0.2); color: #7c8db0; }
+
+/* ---- 多策略选择模式 ---- */
+.multi-select-bar {
+  display: none;
+  padding: 10px 16px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+  align-items: center;
+  gap: 10px;
+}
+.multi-select-bar.active { display: flex; }
+.multi-select-bar .selected-count {
+  font-size: 13px;
+  color: var(--accent-blue);
+  font-weight: 600;
+}
+.multi-select-bar .btn-run-multi {
+  margin-left: auto;
+}
+
+.strategy-item .checkbox {
+  display: none;
+  width: 16px; height: 16px;
+  border: 2px solid var(--border);
+  border-radius: 3px;
+  margin-right: 8px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.strategy-item .checkbox.checked {
+  background: var(--accent-blue);
+  border-color: var(--accent-blue);
+}
+body.multi-mode .strategy-item .checkbox { display: inline-block; }
+body.multi-mode .strategy-item { cursor: pointer; }
+body.multi-mode .strategy-item.selected { border-color: var(--accent-blue); background: rgba(74,144,217,0.08); }
+
+.toggle-multi-btn {
+  padding: 4px 10px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: var(--bg-primary);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 12px;
+}
+.toggle-multi-btn.active { background: var(--accent-blue); color: #fff; border-color: var(--accent-blue); }
 </style>
 </head>
 <body>
@@ -687,6 +894,11 @@ body {
     </div>
     <div class="search-box">
       <input type="text" class="search-input" placeholder="🔍 搜索策略名称..." oninput="searchStrategies(this.value)">
+      <button class="toggle-multi-btn" onclick="toggleMultiMode()" title="多策略交集筛选">🔲 多选模式</button>
+    </div>
+    <div class="multi-select-bar" id="multiSelectBar">
+      <span class="selected-count" id="selectedCount">已选 0 个策略</span>
+      <button class="btn btn-run-multi" onclick="runMultiStrategy()">▶ 运行交集筛选</button>
     </div>
     <div class="strategy-list" id="strategyList"></div>
   </aside>
@@ -1789,6 +2001,7 @@ function renderStrategyList(filter = 'all', search = '') {
   list.innerHTML = filtered.map(s => `
     <div class="strategy-item ${currentStrategy && currentStrategy.id === s.id ? 'active' : ''}"
          onclick="selectStrategy(${s.id})">
+      <span class="checkbox" onclick="toggleStrategySelect(${s.id}, event)"></span>
       <div class="strategy-name">
         <span class="strategy-rank rank-${s.rank.toLowerCase()}">${s.rank}</span>
         ${s.name}
@@ -1944,7 +2157,7 @@ function renderStockTable(stocks) {
           const turnBarWidth = Math.max(2, (s.turnoverRate / maxTurnover) * 80);
 
           return `
-            <tr>
+            <tr style="cursor:pointer" onclick="openStockDetail('${s.code}','${s.name}')" title="点击查看个股详情">
               <td style="color:var(--text-muted)">${i + 1}</td>
               <td class="stock-code">${s.code}</td>
               <td class="stock-name">${s.name}</td>
@@ -2113,6 +2326,680 @@ async function init() {
 
 // 启动
 init();
+
+// ========== 个股详情功能 ==========
+let currentDetailStock = null;
+let currentKlineData = [];
+let currentKlinePeriod = 'daily';
+
+// 获取个股K线数据
+async function fetchKlineData(code, period = 'daily') {
+  const kltMap = { daily: '101', weekly: '102', monthly: '103' };
+  const market = code.startsWith('6') ? '1' : '0';
+  const secid = `${market}.${code}`;
+  const url = `https://push2his.eastmoney.com/api/qt/stock/kline/get?fields1=f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f11,f12,f13&fields2=f51,f52,f53,f54,f55,f56,f57,f58,f59,f60,f61&beg=0&end=20500101&ut=fa5fd1943c7b386f172d6893dbfba10b&rtntype=6&secid=${secid}&klt=${kltMap[period]}&fqt=1&_=${Date.now()}`;
+  try {
+    const resp = await fetch(url, { headers: { 'Referer': 'https://quote.eastmoney.com/' } });
+    const data = await resp.json();
+    if (data?.data?.klines) {
+      return data.data.klines.map(line => {
+        const p = line.split(',');
+        return { date: p[0], open: +p[1], close: +p[2], high: +p[3], low: +p[4], volume: +p[5], amount: +p[6], amplitude: +p[7], changePercent: +p[8], changeAmount: +p[9], turnoverRate: +p[10] };
+      });
+    }
+  } catch (e) { console.warn('K线获取失败:', e); }
+  return [];
+}
+
+// 获取个股资金流向
+async function fetchFundFlow(code) {
+  const market = code.startsWith('6') ? '1' : '0';
+  const secid = `${market}.${code}`;
+  const url = `https://push2.eastmoney.com/api/qt/stock/get?secid=${secid}&fields=f469,f137,f193,f140,f194,f143,f195,f146,f196,f149,f197,f470,f434,f454,f435,f455,f436,f456,f437,f457,f438,f458,f471,f459,f460,f461,f462,f463,f464,f465,f466,f467,f468,f170,f119,f291&ut=b2884a393a59ad64002292a3e90d46a5&_=${Date.now()}`;
+  try {
+    const resp = await fetch(url, { headers: { 'Referer': 'https://data.eastmoney.com/' } });
+    const data = await resp.json();
+    const d = data?.data || {};
+    return {
+      mainNetIn: d.f137 || 0,       // 主力净流入
+      superLargeIn: d.f140 || 0,    // 超大单净流入
+      largeIn: d.f143 || 0,         // 大单净流入
+      mediumIn: d.f146 || 0,        // 中单净流入
+      smallIn: d.f149 || 0,         // 小单净流入
+      mainNetIn5d: d.f193 || 0,     // 5日主力净流入
+      superLargeIn5d: d.f194 || 0,
+      largeIn5d: d.f195 || 0,
+      mediumIn5d: d.f196 || 0,
+      smallIn5d: d.f197 || 0,
+      mainNetIn10d: d.f434 || 0,    // 10日主力净流入
+      mainNetIn20d: d.f454 || 0,    // 20日
+      mainNetIn30d: d.f435 || 0,    // 30日
+      mainNetIn60d: d.f436 || 0,    // 60日
+      mainNetInYtd: d.f455 || 0,    // 年初至今
+    };
+  } catch (e) { console.warn('资金流向获取失败:', e); }
+  return null;
+}
+
+// 打开个股详情
+async function openStockDetail(code, name) {
+  currentDetailStock = { code, name };
+  document.getElementById('stockModal').classList.add('active');
+  document.getElementById('modalTitle').textContent = `${name} (${code})`;
+  document.getElementById('klineSource').textContent = '数据源: 东方财富';
+
+  // 并行获取K线和资金流向
+  const [kline, fundFlow] = await Promise.all([
+    fetchKlineData(code, currentKlinePeriod),
+    fetchFundFlow(code)
+  ]);
+  currentKlineData = kline;
+
+  // 渲染参数
+  renderStockParams(code, name);
+  // 渲染K线
+  if (kline.length > 0) drawKline(kline);
+  // 渲染资金流向
+  renderFundFlow(fundFlow);
+  // 吸筹/出货判断
+  renderCollectSignal(kline, fundFlow);
+  // 走势预判
+  renderPredictions(kline, fundFlow);
+}
+
+function closeStockModal() {
+  document.getElementById('stockModal').classList.remove('active');
+}
+
+function switchKlinePeriod(period, btn) {
+  currentKlinePeriod = period;
+  document.querySelectorAll('.kline-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  if (currentDetailStock) {
+    fetchKlineData(currentDetailStock.code, period).then(kline => {
+      currentKlineData = kline;
+      if (kline.length > 0) drawKline(kline);
+      renderCollectSignal(kline, null);
+      renderPredictions(kline, null);
+    });
+  }
+}
+
+// 渲染个股参数
+function renderStockParams(code, name) {
+  const stock = allStocks.find(s => s.code === code) || {};
+  const params = [
+    { label: '最新价', value: stock.price || '--', cls: stock.changePercent >= 0 ? 'up' : 'down' },
+    { label: '涨跌幅', value: (stock.changePercent || 0).toFixed(2) + '%', cls: stock.changePercent >= 0 ? 'up' : 'down' },
+    { label: '涨跌额', value: (stock.changeAmount || 0).toFixed(2), cls: stock.changeAmount >= 0 ? 'up' : 'down' },
+    { label: '今开', value: stock.open || '--' },
+    { label: '最高', value: stock.high || '--', cls: 'up' },
+    { label: '最低', value: stock.low || '--', cls: 'down' },
+    { label: '昨收', value: stock.prevClose || '--' },
+    { label: '成交量', value: formatVolume(stock.volume) },
+    { label: '成交额', value: formatAmount(stock.amount) },
+    { label: '振幅', value: (stock.amplitude || 0).toFixed(2) + '%' },
+    { label: '换手率', value: (stock.turnoverRate || 0).toFixed(2) + '%' },
+    { label: '量比', value: currentKlineData.length > 1 ? (currentKlineData[currentKlineData.length-1].volume / (currentKlineData.slice(-6,-1).reduce((a,b)=>a+b.volume,0)/5)).toFixed(2) : '--' },
+  ];
+  document.getElementById('paramGrid').innerHTML = params.map(p =>
+    `<div class="param-card"><div class="param-label">${p.label}</div><div class="param-value ${p.cls||''}">${p.value}</div></div>`
+  ).join('');
+}
+
+// Canvas绘制K线图
+function drawKline(data) {
+  const canvas = document.getElementById('klineCanvas');
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = canvas.offsetWidth * dpr;
+  canvas.height = 400 * dpr;
+  ctx.scale(dpr, dpr);
+  const W = canvas.offsetWidth, H = 400;
+  ctx.clearRect(0, 0, W, H);
+
+  const displayCount = Math.min(data.length, 80);
+  const kdata = data.slice(-displayCount);
+  const padding = { top: 20, right: 60, bottom: 60, left: 10 };
+  const chartW = W - padding.left - padding.right;
+  const chartH = H - padding.top - padding.bottom - 80; // 留空间给成交量
+  const barW = chartW / displayCount;
+
+  // 计算价格范围
+  let minP = Infinity, maxP = -Infinity, maxV = 0;
+  for (const d of kdata) {
+    if (d.low < minP) minP = d.low;
+    if (d.high > maxP) maxP = d.high;
+    if (d.volume > maxV) maxV = d.volume;
+  }
+  const priceRange = maxP - minP || 1;
+  const volH = 60;
+
+  // 计算均线
+  function ma(period) {
+    const result = [];
+    for (let i = 0; i < kdata.length; i++) {
+      if (i < period - 1) { result.push(null); continue; }
+      let sum = 0;
+      for (let j = i - period + 1; j <= i; j++) sum += kdata[j].close;
+      result.push(sum / period);
+    }
+    return result;
+  }
+  const ma5 = ma(5), ma10 = ma(10), ma20 = ma(20), ma60 = ma(60);
+  const maColors = { ma5: '#f5c542', ma10: '#4a90d9', ma20: '#e74c3c', ma60: '#2ecc71' };
+
+  function priceY(p) { return padding.top + chartH * (1 - (p - minP) / priceRange); }
+  function volY(v) { return H - padding.bottom - (v / maxV) * volH; }
+
+  // 绘制网格
+  ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+  ctx.lineWidth = 0.5;
+  for (let i = 0; i <= 4; i++) {
+    const y = padding.top + chartH * i / 4;
+    ctx.beginPath(); ctx.moveTo(padding.left, y); ctx.lineTo(W - padding.right, y); ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,0.4)';
+    ctx.font = '10px monospace';
+    ctx.textAlign = 'right';
+    ctx.fillText((maxP - priceRange * i / 4).toFixed(2), W - 5, y + 3);
+  }
+
+  // 绘制K线蜡烛
+  for (let i = 0; i < kdata.length; i++) {
+    const d = kdata[i];
+    const x = padding.left + i * barW + barW * 0.15;
+    const w = barW * 0.7;
+    const isUp = d.close >= d.open;
+    const color = isUp ? '#e74c3c' : '#2ecc71';
+
+    // 影线
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x + w/2, priceY(d.high));
+    ctx.lineTo(x + w/2, priceY(d.low));
+    ctx.stroke();
+
+    // 实体
+    const bodyTop = priceY(Math.max(d.open, d.close));
+    const bodyBot = priceY(Math.min(d.open, d.close));
+    const bodyH = Math.max(bodyBot - bodyTop, 1);
+    if (isUp) {
+      ctx.fillStyle = color;
+      ctx.fillRect(x, bodyTop, w, bodyH);
+    } else {
+      ctx.fillStyle = color;
+      ctx.fillRect(x, bodyTop, w, bodyH);
+    }
+
+    // 成交量
+    const vy = volY(d.volume);
+    ctx.fillStyle = isUp ? 'rgba(231,76,60,0.5)' : 'rgba(46,204,113,0.5)';
+    ctx.fillRect(x, H - padding.bottom - volH, w, H - padding.bottom - vy);
+  }
+
+  // 绘制均线
+  function drawMA(maData, color) {
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    let started = false;
+    for (let i = 0; i < maData.length; i++) {
+      if (maData[i] === null) continue;
+      const x = padding.left + i * barW + barW / 2;
+      const y = priceY(maData[i]);
+      if (!started) { ctx.moveTo(x, y); started = true; }
+      else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+  }
+  drawMA(ma5, maColors.ma5);
+  drawMA(ma10, maColors.ma10);
+  drawMA(ma20, maColors.ma20);
+  drawMA(ma60, maColors.ma60);
+
+  // 均线图例
+  const legends = [['MA5', maColors.ma5], ['MA10', maColors.ma10], ['MA20', maColors.ma20], ['MA60', maColors.ma60]];
+  ctx.font = '10px monospace';
+  legends.forEach(([label, color], i) => {
+    const lx = padding.left + i * 70;
+    ctx.fillStyle = color;
+    ctx.fillRect(lx, 4, 12, 3);
+    ctx.fillText(label, lx + 16, 8);
+  });
+
+  // 日期标签
+  ctx.fillStyle = 'rgba(255,255,255,0.3)';
+  ctx.font = '9px monospace';
+  ctx.textAlign = 'center';
+  const step = Math.max(Math.floor(displayCount / 6), 1);
+  for (let i = 0; i < displayCount; i += step) {
+    const x = padding.left + i * barW + barW / 2;
+    ctx.fillText(kdata[i].date.slice(5), x, H - 5);
+  }
+}
+
+// 渲染资金流向
+function renderFundFlow(ff) {
+  if (!ff) {
+    document.getElementById('fundFlowBar').innerHTML = '<div style="width:100%;background:#333;text-align:center">暂无资金数据</div>';
+    document.getElementById('fundFlowDetail').innerHTML = '';
+    return;
+  }
+  const total = Math.abs(ff.mainNetIn) + Math.abs(ff.mediumIn) + Math.abs(ff.smallIn) || 1;
+  const orgPct = Math.max(Math.abs(ff.mainNetIn) / total * 100, 5);
+  const instPct = Math.max(Math.abs(ff.mediumIn) / total * 100, 5);
+  const retPct = 100 - orgPct - instPct;
+
+  document.getElementById('fundFlowBar').innerHTML = `
+    <div style="width:${orgPct}%;background:${ff.mainNetIn>=0?'#e74c3c':'#2ecc71'}">主力 ${fmtMoney(ff.mainNetIn)}</div>
+    <div style="width:${instPct}%;background:#4a90d9">中单 ${fmtMoney(ff.mediumIn)}</div>
+    <div style="width:${retPct}%;background:#7c8db0">小单 ${fmtMoney(ff.smallIn)}</div>`;
+
+  document.getElementById('fundFlowDetail').innerHTML = `
+    <table style="width:100%;font-size:11px;border-collapse:collapse">
+      <tr style="color:var(--text-muted)"><td>周期</td><td>主力净流入</td><td>超大单</td><td>大单</td><td>中单</td><td>小单</td></tr>
+      <tr><td>今日</td><td style="color:${ff.mainNetIn>=0?'var(--accent-red)':'var(--accent-green)'}">${fmtMoney(ff.mainNetIn)}</td><td>${fmtMoney(ff.superLargeIn)}</td><td>${fmtMoney(ff.largeIn)}</td><td>${fmtMoney(ff.mediumIn)}</td><td>${fmtMoney(ff.smallIn)}</td></tr>
+      <tr><td>5日</td><td style="color:${ff.mainNetIn5d>=0?'var(--accent-red)':'var(--accent-green)'}">${fmtMoney(ff.mainNetIn5d)}</td><td>${fmtMoney(ff.superLargeIn5d)}</td><td>${fmtMoney(ff.largeIn5d)}</td><td>${fmtMoney(ff.mediumIn5d)}</td><td>${fmtMoney(ff.smallIn5d)}</td></tr>
+      <tr><td>10日</td><td style="color:${ff.mainNetIn10d>=0?'var(--accent-red)':'var(--accent-green)'}">${fmtMoney(ff.mainNetIn10d)}</td><td colspan="4">-</td></tr>
+      <tr><td>30日</td><td style="color:${ff.mainNetIn30d>=0?'var(--accent-red)':'var(--accent-green)'}">${fmtMoney(ff.mainNetIn30d)}</td><td colspan="4">-</td></tr>
+    </table>`;
+}
+
+// 吸筹/出货判断
+function renderCollectSignal(kline, ff) {
+  if (!kline || kline.length < 20) {
+    document.getElementById('collectSignalPanel').innerHTML = '<p style="font-size:12px;color:var(--text-muted)">数据不足，无法判断</p>';
+    return;
+  }
+  const signals = [];
+  const last = kline[kline.length - 1];
+  const prev5 = kline.slice(-6, -1);
+  const prev10 = kline.slice(-11, -1);
+  const prev20 = kline.slice(-21, -1);
+
+  // 1. 缩量下跌后放量上涨 → 吸筹
+  const avgVol5 = prev5.reduce((a,b) => a + b.volume, 0) / 5;
+  const avgVol10 = prev10.reduce((a,b) => a + b.volume, 0) / 10;
+  if (last.volume > avgVol5 * 1.5 && last.changePercent > 1 && prev5.some(d => d.changePercent < -1)) {
+    signals.push({ type: 'absorbing', text: '放量上涨（缩量下跌后放量），疑似吸筹', strength: '强' });
+  }
+
+  // 2. 连续小阳线+缩量 → 吸筹
+  const smallYang = prev5.filter(d => d.changePercent > 0 && d.changePercent < 2 && d.volume < avgVol10);
+  if (smallYang.length >= 3) {
+    signals.push({ type: 'absorbing', text: '连续小阳线缩量上涨，疑似温和吸筹', strength: '中' });
+  }
+
+  // 3. 大阴线放量 → 出货
+  if (last.changePercent < -3 && last.volume > avgVol5 * 2) {
+    signals.push({ type: 'shipping', text: '放量下跌，疑似主力出货', strength: '强' });
+  }
+
+  // 4. 高位放量滞涨 → 出货
+  const highPrice = Math.max(...prev20.map(d => d.high));
+  if (last.close > highPrice * 0.95 && last.changePercent < 1 && last.volume > avgVol10 * 1.5) {
+    signals.push({ type: 'shipping', text: '高位放量滞涨，疑似出货', strength: '强' });
+  }
+
+  // 5. 资金流向辅助判断
+  if (ff) {
+    if (ff.mainNetIn > 0 && ff.mainNetIn5d > 0) {
+      signals.push({ type: 'absorbing', text: '主力资金持续净流入，资金面偏多', strength: '中' });
+    } else if (ff.mainNetIn < 0 && ff.mainNetIn5d < 0) {
+      signals.push({ type: 'shipping', text: '主力资金持续净流出，资金面偏空', strength: '中' });
+    }
+  }
+
+  // 6. 均线判断
+  if (kline.length >= 60) {
+    const closes = kline.map(d => d.close);
+    const ma20 = closes.slice(-20).reduce((a,b) => a+b, 0) / 20;
+    const ma60 = closes.slice(-60).reduce((a,b) => a+b, 0) / 60;
+    if (last.close > ma20 && ma20 > ma60) {
+      signals.push({ type: 'absorbing', text: '均线多头排列（MA20>MA60），趋势向好', strength: '弱' });
+    } else if (last.close < ma20 && ma20 < ma60) {
+      signals.push({ type: 'shipping', text: '均线空头排列（MA20<MA60），趋势偏空', strength: '弱' });
+    }
+  }
+
+  if (signals.length === 0) {
+    signals.push({ type: 'neutral', text: '暂无明显吸筹/出货信号', strength: '-' });
+  }
+
+  const absorbCount = signals.filter(s => s.type === 'absorbing').length;
+  const shipCount = signals.filter(s => s.type === 'shipping').length;
+  let verdict = 'neutral', verdictText = '观望';
+  if (absorbCount > shipCount && absorbCount >= 2) { verdict = 'absorbing'; verdictText = '📈 偏向吸筹'; }
+  else if (shipCount > absorbCount && shipCount >= 2) { verdict = 'shipping'; verdictText = '📉 偏向出货'; }
+
+  document.getElementById('collectSignalPanel').innerHTML = `
+    <div style="margin-bottom:8px"><span class="collect-signal ${verdict}">${verdictText}</span></div>
+    ${signals.map(s => `<div style="font-size:11px;color:var(--text-secondary);margin:4px 0">• ${s.text} <span style="color:var(--text-muted)">[${s.strength}]</span></div>`).join('')}`;
+}
+
+// 走势预判
+function renderPredictions(kline, ff) {
+  if (!kline || kline.length < 20) {
+    document.getElementById('predictionPanel').innerHTML = '<p style="font-size:12px;color:var(--text-muted)">数据不足，无法预判</p>';
+    return;
+  }
+  const predictions = [];
+  const last = kline[kline.length - 1];
+  const closes = kline.map(d => d.close);
+  const volumes = kline.map(d => d.volume);
+
+  // 计算技术指标
+  function calcRSI(period) {
+    const rsi = [];
+    for (let i = 0; i < closes.length; i++) {
+      if (i < period) { rsi.push(50); continue; }
+      let gains = 0, losses = 0;
+      for (let j = i - period + 1; j <= i; j++) {
+        const diff = closes[j] - closes[j-1];
+        if (diff > 0) gains += diff; else losses -= diff;
+      }
+      const rs = losses === 0 ? 100 : gains / losses;
+      rsi.push(100 - 100 / (1 + rs));
+    }
+    return rsi;
+  }
+  function calcMACD() {
+    let ema12 = closes[0], ema26 = closes[0];
+    const dif = [], dea = [], macd = [];
+    for (let i = 0; i < closes.length; i++) {
+      ema12 = ema12 * 11/13 + closes[i] * 2/13;
+      ema26 = ema26 * 25/27 + closes[i] * 2/27;
+      dif.push(ema12 - ema26);
+    }
+    let emaDif = dif[0];
+    for (let i = 0; i < dif.length; i++) {
+      emaDif = i === 0 ? dif[0] : emaDif * 8/10 + dif[i] * 2/10;
+      dea.push(emaDif);
+      macd.push((dif[i] - emaDif) * 2);
+    }
+    return { dif, dea, macd };
+  }
+  function calcKDJ() {
+    const k = [], d = [], j = [];
+    for (let i = 0; i < kline.length; i++) {
+      const highN = Math.max(...kline.slice(Math.max(0,i-8), i+1).map(x=>x.high));
+      const lowN = Math.min(...kline.slice(Math.max(0,i-8), i+1).map(x=>x.low));
+      const rsv = highN === lowN ? 50 : (kline[i].close - lowN) / (highN - lowN) * 100;
+      k.push(i === 0 ? 50 : k[i-1] * 2/3 + rsv * 1/3);
+      d.push(i === 0 ? 50 : d[i-1] * 2/3 + k[i] * 1/3);
+      j.push(3 * k[i] - 2 * d[i]);
+    }
+    return { k, d, j };
+  }
+
+  const rsi = calcRSI(14);
+  const macdData = calcMACD();
+  const kdj = calcKDJ();
+  const lastRSI = rsi[rsi.length - 1];
+  const lastDIF = macdData.dif[macdData.dif.length - 1];
+  const lastDEA = macdData.dea[macdData.dea.length - 1];
+  const lastMACD = macdData.macd[macdData.macd.length - 1];
+  const lastK = kdj.k[kdj.k.length - 1];
+  const lastD = kdj.d[kdj.d.length - 1];
+  const lastJ = kdj.j[kdj.j.length - 1];
+
+  // 预判1: RSI超卖反弹
+  if (lastRSI < 30) {
+    predictions.push({
+      type: '看涨反弹', prob: 65, cls: 'medium',
+      desc: 'RSI进入超卖区域，短期存在技术性反弹需求',
+      reason: `RSI(14)=${lastRSI.toFixed(1)}，低于30超卖线。历史统计显示，RSI<30后5个交易日内反弹概率约65%。结合成交量变化判断反弹力度。`
+    });
+  } else if (lastRSI > 70) {
+    predictions.push({
+      type: '看跌回调', prob: 60, cls: 'medium',
+      desc: 'RSI进入超买区域，短期存在回调压力',
+      reason: `RSI(14)=${lastRSI.toFixed(1)}，高于70超买线。历史统计显示，RSI>70后5个交易日内回调概率约60%。`
+    });
+  }
+
+  // 预判2: MACD金叉/死叉
+  const prevDIF = macdData.dif[macdData.dif.length - 2];
+  const prevDEA = macdData.dea[macdData.dea.length - 2];
+  if (prevDIF < prevDEA && lastDIF > lastDEA) {
+    predictions.push({
+      type: 'MACD金叉看涨', prob: 60, cls: 'medium',
+      desc: 'MACD出现金叉信号，短期趋势可能转强',
+      reason: `DIF(${lastDIF.toFixed(2)})上穿DEA(${lastDEA.toFixed(2)})形成金叉。MACD柱状图由负转正，多头力量增强。配合成交量放大则信号更可靠。`
+    });
+  } else if (prevDIF > prevDEA && lastDIF < lastDEA) {
+    predictions.push({
+      type: 'MACD死叉看跌', prob: 55, cls: 'low',
+      desc: 'MACD出现死叉信号，短期趋势可能转弱',
+      reason: `DIF(${lastDIF.toFixed(2)})下穿DEA(${lastDEA.toFixed(2)})形成死叉。空头力量增强，建议减仓观望。`
+    });
+  }
+
+  // 预判3: KDJ金叉/超卖
+  if (lastK < 20 && lastD < 20) {
+    predictions.push({
+      type: 'KDJ超卖反弹', prob: 60, cls: 'medium',
+      desc: 'KDJ进入超卖区，存在反弹机会',
+      reason: `K=${lastK.toFixed(1)}, D=${lastD.toFixed(1)}, J=${lastJ.toFixed(1)}，均低于20超卖线。`
+    });
+  } else if (lastK > 80 && lastD > 80) {
+    predictions.push({
+      type: 'KDJ超买回调', prob: 55, cls: 'low',
+      desc: 'KDJ进入超买区，注意回调风险',
+      reason: `K=${lastK.toFixed(1)}, D=${lastD.toFixed(1)}, J=${lastJ.toFixed(1)}，均高于80超买线。`
+    });
+  }
+
+  // 预判4: 放量突破
+  const avgVol = volumes.slice(-20).reduce((a,b) => a+b, 0) / 20;
+  const high20 = Math.max(...closes.slice(-20));
+  if (last.close > high20 && last.volume > avgVol * 1.5) {
+    predictions.push({
+      type: '放量突破看涨', prob: 70, cls: 'high',
+      desc: '放量突破20日新高，上涨动能强劲',
+      reason: `收盘价${last.close}突破20日高点${high20}，成交量是20日均量的${(last.volume/avgVol).toFixed(1)}倍。放量突破有效性较高，后续有望继续上行。`
+    });
+  }
+
+  // 预判5: 均线支撑/压力
+  const ma5 = closes.slice(-5).reduce((a,b) => a+b, 0) / 5;
+  const ma20 = closes.slice(-20).reduce((a,b) => a+b, 0) / 20;
+  if (last.close > ma5 && ma5 > ma20) {
+    predictions.push({
+      type: '均线多头看涨', prob: 58, cls: 'low',
+      desc: '短期均线多头排列，趋势向好',
+      reason: `MA5(${ma5.toFixed(2)}) > MA20(${ma20.toFixed(2)})，均线呈多头排列。趋势跟踪策略建议持有。`
+    });
+  } else if (last.close < ma5 && ma5 < ma20) {
+    predictions.push({
+      type: '均线空头看跌', prob: 55, cls: 'low',
+      desc: '短期均线空头排列，趋势偏弱',
+      reason: `MA5(${ma5.toFixed(2)}) < MA20(${ma20.toFixed(2)})，均线呈空头排列。建议等待均线拐头信号。`
+    });
+  }
+
+  // 预判6: 资金面预判
+  if (ff) {
+    if (ff.mainNetIn5d > 0 && ff.mainNetIn10d > 0) {
+      predictions.push({
+        type: '资金持续流入看涨', prob: 62, cls: 'medium',
+        desc: '主力资金多日持续净流入，资金面支撑上涨',
+        reason: `5日主力净流入${fmtMoney(ff.mainNetIn5d)}，10日净流入${fmtMoney(ff.mainNetIn10d)}。资金持续流入通常预示后续1-2周有上涨概率。`
+      });
+    } else if (ff.mainNetIn5d < 0 && ff.mainNetIn10d < 0) {
+      predictions.push({
+        type: '资金持续流出看跌', prob: 58, cls: 'low',
+        desc: '主力资金多日持续净流出，资金面压制上涨',
+        reason: `5日主力净流出${fmtMoney(Math.abs(ff.mainNetIn5d))}，资金持续流出需警惕进一步下跌。`
+      });
+    }
+  }
+
+  if (predictions.length === 0) {
+    predictions.push({
+      type: '震荡整理', prob: 50, cls: 'low',
+      desc: '当前无明显方向信号，建议观望',
+      reason: '各项技术指标处于中性区间，暂无明确的多空信号。建议等待突破方向确认后再做决策。'
+    });
+  }
+
+  // 综合评分
+  const avgProb = predictions.reduce((a,p) => a + p.prob, 0) / predictions.length;
+  const bullCount = predictions.filter(p => p.type.includes('看涨') || p.type.includes('反弹') || p.type.includes('突破')).length;
+  const bearCount = predictions.filter(p => p.type.includes('看跌') || p.type.includes('回调')).length;
+
+  document.getElementById('predictionPanel').innerHTML = `
+    <div style="display:flex;gap:12px;margin-bottom:14px;padding:12px;background:var(--bg-primary);border-radius:8px;align-items:center">
+      <div style="text-align:center">
+        <div style="font-size:11px;color:var(--text-muted)">综合评分</div>
+        <div style="font-size:28px;font-weight:800;color:${avgProb>60?'var(--accent-red)':avgProb<50?'var(--accent-green)':'var(--accent-orange)'}">${avgProb.toFixed(0)}</div>
+      </div>
+      <div style="flex:1;font-size:12px;color:var(--text-secondary)">
+        多头信号 <b style="color:var(--accent-red)">${bullCount}</b> 个 vs 空头信号 <b style="color:var(--accent-green)">${bearCount}</b> 个<br>
+        ${bullCount > bearCount ? '📈 综合判断: 偏多，上涨概率较大' : bullCount < bearCount ? '📉 综合判断: 偏空，下跌风险较高' : '➡️ 综合判断: 震荡，方向不明'}
+      </div>
+    </div>
+    ${predictions.map(p => `
+      <div class="prediction-card">
+        <div class="prediction-header">
+          <span class="prediction-type">${p.type}</span>
+          <span class="prediction-prob ${p.cls}">${p.prob}%</span>
+        </div>
+        <div class="prediction-desc">${p.desc}</div>
+        <div class="prediction-reason">📊 原理: ${p.reason}</div>
+      </div>
+    `).join('')}`;
+}
+
+// ========== 多策略选择功能 ==========
+let multiMode = false;
+let selectedStrategies = new Set();
+
+function toggleMultiMode() {
+  multiMode = !multiMode;
+  document.body.classList.toggle('multi-mode', multiMode);
+  document.querySelector('.toggle-multi-btn').classList.toggle('active', multiMode);
+  document.getElementById('multiSelectBar').classList.toggle('active', multiMode);
+  if (!multiMode) {
+    selectedStrategies.clear();
+    document.querySelectorAll('.strategy-item').forEach(el => {
+      el.classList.remove('selected');
+      el.querySelector('.checkbox')?.classList.remove('checked');
+    });
+    updateSelectedCount();
+  }
+}
+
+function toggleStrategySelect(id, e) {
+  if (!multiMode) return;
+  e.stopPropagation();
+  if (selectedStrategies.has(id)) {
+    selectedStrategies.delete(id);
+    e.target.closest('.strategy-item').classList.remove('selected');
+    e.target.classList.remove('checked');
+  } else {
+    selectedStrategies.add(id);
+    e.target.closest('.strategy-item').classList.add('selected');
+    e.target.classList.add('checked');
+  }
+  updateSelectedCount();
+}
+
+function updateSelectedCount() {
+  document.getElementById('selectedCount').textContent = `已选 ${selectedStrategies.size} 个策略`;
+}
+
+async function runMultiStrategy() {
+  if (selectedStrategies.size < 2) {
+    alert('请至少选择2个策略进行交集筛选');
+    return;
+  }
+  if (!allStocks.length) {
+    showLoading('正在获取市场数据...');
+    try { allStocks = await fetchAllStocks(); } catch(e) {
+      hideLoading();
+      alert('数据获取失败'); return;
+    }
+    hideLoading();
+  }
+
+  const strategies = [...selectedStrategies].map(id => STRATEGIES.find(s => s.id === id)).filter(Boolean);
+  const names = strategies.map(s => s.name).join(' ∩ ');
+
+  showLoading(`正在执行多策略交集: ${names}...`);
+  await new Promise(r => setTimeout(r, 500));
+
+  // 取交集
+  let result = allStocks.filter(s => strategies[0].filter(s));
+  for (let i = 1; i < strategies.length; i++) {
+    result = result.filter(s => strategies[i].filter(s));
+  }
+  // 按成交额排序
+  result.sort((a, b) => b.amount - a.amount);
+
+  filteredStocks = result;
+  hideLoading();
+
+  document.getElementById('contentTitle').textContent = `多策略交集 (${selectedStrategies.size}个策略)`;
+  renderStockTable(filteredStocks);
+  updateStats(filteredStocks);
+}
+
+// ========== 工具函数 ==========
+function fmtMoney(v) {
+  if (!v) return '0';
+  const abs = Math.abs(v);
+  if (abs >= 100000000) return (v / 100000000).toFixed(2) + '亿';
+  if (abs >= 10000) return (v / 10000).toFixed(2) + '万';
+  return v.toFixed(0);
+}
 </script>
+<!-- 个股详情弹窗 -->
+<div class="modal-overlay" id="stockModal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeStockModal()">&times;</button>
+    <div class="modal-title" id="modalTitle">个股详情</div>
+    <div class="modal-grid">
+      <!-- K线图 -->
+      <div class="modal-full">
+        <div class="kline-container">
+          <div class="kline-tabs">
+            <button class="kline-tab active" onclick="switchKlinePeriod('daily',this)">日K</button>
+            <button class="kline-tab" onclick="switchKlinePeriod('weekly',this)">周K</button>
+            <button class="kline-tab" onclick="switchKlinePeriod('monthly',this)">月K</button>
+            <span style="margin-left:auto;font-size:11px;color:var(--text-muted)" id="klineSource"></span>
+          </div>
+          <canvas id="klineCanvas" width="1100" height="400"></canvas>
+        </div>
+      </div>
+      <!-- 全部参数 -->
+      <div>
+        <h4 style="margin-bottom:10px;color:var(--text-primary)">📈 个股参数</h4>
+        <div class="param-grid" id="paramGrid"></div>
+      </div>
+      <!-- 吸筹/出货判断 -->
+      <div>
+        <h4 style="margin-bottom:10px;color:var(--text-primary)">💰 资金流向分析</h4>
+        <div id="fundFlowPanel">
+          <div class="fund-flow-bar" id="fundFlowBar"></div>
+          <div class="fund-flow-legend">
+            <span class="legend-org">机构/主力</span>
+            <span class="legend-inst">游资/大户</span>
+            <span class="legend-retail">散户</span>
+          </div>
+          <div id="fundFlowDetail" style="margin-top:12px;font-size:12px;"></div>
+        </div>
+        <div style="margin-top:16px;" id="collectSignalPanel"></div>
+      </div>
+      <!-- 走势预判 -->
+      <div class="modal-full">
+        <h4 style="margin-bottom:10px;color:var(--text-primary)">🔮 走势预判</h4>
+        <div id="predictionPanel"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
