@@ -2086,14 +2086,22 @@ const DATA_SOURCES = [
     }
   },
   {
-    id: 'sina',
-    name: '新浪财经',
+    id: 'tencent',
+    name: '腾讯财经',
     type: 'text',
-    // 新浪接口只支持批量获取，需要获取全市场代码列表后分批请求
-    // 这里使用腾讯接口作为备选（支持全市场列表）
     baseUrl: 'https://qt.gtimg.cn/q=',
-    // 预定义一批热门股票代码作为备选
-    codes: 'sh600519,sh600036,sh601318,sh600276,sh600900,sh601012,sh601888,sh600030,sh601398,sh601939,sh600519,sh601088,sh601899,sh600690,sh600436,sh600519,sh600809,sh600887,sh601318,sh601628,sh601601,sh600048,sh600031,sh600519,sh600111,sh600519,sh600438,sh600089,sh600519,sh600536,sh600588,sh600519,sh600887,sh600519,sh600519,sh601318,sh601919,sh600519,sh600276,sh600519,sh600588,sh600519,sh601668,sz000001,sz000002,sz000333,sz000538,sz000651,sz000725,sz000768,sz000858,sz000895,sz002001,sz002007,sz002024,sz002027,sz002142,sz002230,sz002236,sz002352,sz002415,sz002460,sz002475,sz002594,sz002714,sz002812,sz300003,sz300014,sz300015,sz300033,sz300059,sz300122,sz300124,sz300274,sz300408,sz300413,sz300433,sz300498,sz300750,sz300760,sz300999,sh688981,sh688008,sh688012,sh688111,sh688363,sh688599',
+    // 沪深A股全市场代码列表，分批获取
+    allCodes: (() => {
+      const codes = [];
+      for (let i = 600000; i <= 609999; i++) codes.push('sh' + i);
+      for (let i = 688000; i <= 689999; i++) codes.push('sh' + i);
+      for (let i = 1; i <= 9999; i++) codes.push('sz' + String(i).padStart(6, '0'));
+      for (let i = 300000; i <= 309999; i++) codes.push('sz' + i);
+      for (let i = 430000; i <= 439999; i++) codes.push('bj' + i);
+      for (let i = 830000; i <= 839999; i++) codes.push('bj' + i);
+      for (let i = 920000; i <= 929999; i++) codes.push('bj' + i);
+      return codes;
+    })(),
     parse: (text) => {
       const stocks = [];
       const lines = text.trim().split(';');
@@ -2105,8 +2113,8 @@ const DATA_SOURCES = [
         const fields = match[2].split('~');
         if (fields.length < 45) continue;
         stocks.push({
-          code: code.replace(/^(sh|sz)/, ''),
-          name: fields[1],
+          code: code.replace(/^(sh|sz|bj)/, ''),
+          name: fields[1] || '',
           price: parseFloat(fields[3]) || 0,
           changePercent: parseFloat(fields[5]) || 0,
           changeAmount: parseFloat(fields[4]) || 0,
@@ -2122,14 +2130,6 @@ const DATA_SOURCES = [
       }
       return stocks;
     }
-  },
-  {
-    id: 'tencent',
-    name: '腾讯财经',
-    type: 'text',
-    baseUrl: 'https://qt.gtimg.cn/q=',
-    codes: 'sh600519,sh600036,sh601318,sh600276,sh600900,sh601012,sh601888,sh600030,sh601398,sh601939,sh600519,sh601088,sh601899,sh600690,sh600436,sh600519,sh600809,sh600887,sh601318,sh601628,sh601601,sh600048,sh600031,sh600519,sh600111,sh600519,sh600438,sh600089,sh600519,sh600536,sh600588,sh600519,sh600887,sh600519,sh600519,sh601318,sh601919,sh600519,sh600276,sh600519,sh600588,sh600519,sh601668,sz000001,sz000002,sz000333,sz000538,sz000651,sz000725,sz000768,sz000858,sz000895,sz002001,sz002007,sz002024,sz002027,sz002142,sz002230,sz002236,sz002352,sz002415,sz002460,sz002475,sz002594,sz002714,sz002812,sz300003,sz300014,sz300015,sz300033,sz300059,sz300122,sz300124,sz300274,sz300408,sz300413,sz300433,sz300498,sz300750,sz300760,sz300999,sh688981,sh688008,sh688012,sh688111,sh688363,sh688599',
-    parse: function(text) { return this.parse(text); } // 复用sina的parse
   }
 ];
 
@@ -2189,26 +2189,62 @@ async function fetchAllStocks() {
         } else {
           throw new Error('返回数据为空');
         }
-      } else if (source.id === 'sina' || source.id === 'tencent') {
-        url = `${source.baseUrl}${source.codes}`;
-        response = await fetch(url, {
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+      } else if (source.id === 'tencent') {
+        // 分批获取，每次100只
+        const allCodes = source.allCodes;
+        const batchSize = 100;
+        let allData = [];
+        const totalBatches = Math.ceil(allCodes.length / batchSize);
+        console.log(`[DEBUG] 腾讯财经需要请求 ${totalBatches} 批，每批${batchSize}只`);
+
+        for (let i = 0; i < totalBatches; i++) {
+          const batch = allCodes.slice(i * batchSize, (i + 1) * batchSize);
+          url = `${source.baseUrl}${batch.join(',')}`;
+          response = await fetch(url, {
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            }
+          });
+          if (!response.ok) {
+            console.warn(`[DEBUG] 腾讯第${i+1}批失败: HTTP ${response.status}`);
+            continue;
           }
-        });
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const text = await response.text();
-        data = text;
+          const text = await response.text();
+          const batchData = source.parse(text);
+          if (batchData && batchData.length > 0) {
+            allData = allData.concat(batchData);
+          }
+          console.log(`[DEBUG] 腾讯第${i+1}/${totalBatches}批: +${batchData?.length || 0}条，累计${allData.length}条`);
+          // 每10批暂停一下，避免请求过快
+          if (i > 0 && i % 10 === 0) {
+            await new Promise(r => setTimeout(r, 100));
+          }
+        }
+
+        console.log(`[DEBUG] 腾讯财经总计获取: ${allData.length} 只股票`);
+        if (allData.length > 0) {
+          apiLatencyMs = Date.now() - startTime;
+          updateApiStatus('online', source.name, apiLatencyMs);
+          console.log(`✅ 数据源 ${source.name} 成功，获取 ${allData.length} 只股票`);
+          return allData;
+        } else {
+          throw new Error('返回数据为空');
+        }
       }
 
-      const stocks = source.parse(data);
-      if (stocks && stocks.length > 0) {
-        apiLatencyMs = Date.now() - startTime;
-        updateApiStatus('online', source.name, apiLatencyMs);
-        console.log(`✅ 数据源 ${source.name} 成功，获取 ${stocks.length} 只股票`);
-        return stocks;
+      // 腾讯已在上面处理并return，这里只处理其他数据源
+      if (source.id !== 'tencent') {
+        const stocks = source.parse(data);
+        if (stocks && stocks.length > 0) {
+          apiLatencyMs = Date.now() - startTime;
+          updateApiStatus('online', source.name, apiLatencyMs);
+          console.log(`✅ 数据源 ${source.name} 成功，获取 ${stocks.length} 只股票`);
+          return stocks;
+        } else {
+          throw new Error('返回数据为空');
+        }
       } else {
-        throw new Error('返回数据为空');
+        throw new Error('腾讯数据获取失败');
       }
     } catch (error) {
       console.warn(`⚠️ 数据源 ${source.name} 失败:`, error.message);
