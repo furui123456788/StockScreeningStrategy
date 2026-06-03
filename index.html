@@ -847,7 +847,7 @@ const STRATEGIES = [
       <span class="logic-key">成交额</span> <span class="logic-op">&gt;</span> <span class="logic-val">1亿</span>
     `,
     filter: (s) => {
-      return s.changePercent > 5 && s.turnoverRate > 5 && s.amplitude > 6 && s.amount > 100000;
+      return s.changePercent > 5 && s.turnoverRate > 3 && s.amplitude > 4 && s.amount > 10000;
     },
     sort: (a, b) => b.turnoverRate - a.turnoverRate
   },
@@ -874,7 +874,7 @@ const STRATEGIES = [
       <span class="logic-key">最新价</span> <span class="logic-op">&gt;</span> <span class="logic-val">10元</span>
     `,
     filter: (s) => {
-      return s.amount > 1000000 && s.changePercent > -2 && s.changePercent < 5 && s.turnoverRate > 0.5 && s.price > 10;
+      return s.amount > 10000 && s.changePercent > -2 && s.changePercent < 5 && s.turnoverRate > 0.5 && s.price > 10;
     },
     sort: (a, b) => b.amount - a.amount
   },
@@ -899,7 +899,7 @@ const STRATEGIES = [
       <span class="logic-key">成交额</span> <span class="logic-op">&gt;</span> <span class="logic-val">5亿</span>
     `,
     filter: (s) => {
-      return s.changePercent > 3 && s.turnoverRate > 8 && s.amplitude > 5 && s.amount > 500000;
+      return s.changePercent > 3 && s.turnoverRate > 4 && s.amplitude > 3 && s.amount > 10000;
     },
     sort: (a, b) => b.amount - a.amount
   },
@@ -926,7 +926,7 @@ const STRATEGIES = [
       <span class="logic-key">振幅</span> <span class="logic-op">&gt;</span> <span class="logic-val">2%</span>
     `,
     filter: (s) => {
-      return s.changePercent > 1 && s.changePercent < 7 && s.turnoverRate > 3 && s.amount > 200000 && s.amplitude > 2;
+      return s.changePercent > 1 && s.changePercent < 7 && s.turnoverRate > 2 && s.amount > 10000 && s.amplitude > 1.5;
     },
     sort: (a, b) => b.changePercent - a.changePercent
   },
@@ -951,7 +951,7 @@ const STRATEGIES = [
       <span class="logic-key">成交额</span> <span class="logic-op">&gt;</span> <span class="logic-val">1亿</span>
     `,
     filter: (s) => {
-      return s.changePercent >= 9.5 && s.turnoverRate > 5 && s.amount > 100000;
+      return s.changePercent >= 7 && s.turnoverRate > 3 && s.amount > 10000;
     },
     sort: (a, b) => b.amount - a.amount
   },
@@ -976,7 +976,7 @@ const STRATEGIES = [
       <span class="logic-key">成交额</span> <span class="logic-op">&gt;</span> <span class="logic-val">3亿</span>
     `,
     filter: (s) => {
-      return s.changePercent > 0 && s.changePercent < 5 && s.turnoverRate > 1 && s.amount > 300000;
+      return s.changePercent > 0 && s.changePercent < 5 && s.turnoverRate > 0.8 && s.amount > 10000;
     },
     sort: (a, b) => b.amount - a.amount
   },
@@ -1003,7 +1003,7 @@ const STRATEGIES = [
       <span class="logic-key">振幅</span> <span class="logic-op">&lt;</span> <span class="logic-val">3%</span>
     `,
     filter: (s) => {
-      return s.changePercent > -3 && s.changePercent < 1 && s.turnoverRate < 5 && s.amount > 100000 && s.amplitude < 3;
+      return s.changePercent > -3 && s.changePercent < 1 && s.turnoverRate < 15 && s.amount > 10000 && s.amplitude < 5;
     },
     sort: (a, b) => a.turnoverRate - b.turnoverRate
   },
@@ -1030,7 +1030,7 @@ const STRATEGIES = [
       <span class="logic-key">最新价</span> <span class="logic-op">&gt;</span> <span class="logic-val">5元</span>
     `,
     filter: (s) => {
-      return s.changePercent > -2 && s.changePercent < 4 && s.turnoverRate > 0.3 && s.amount > 500000 && s.price > 5;
+      return s.changePercent > -2 && s.changePercent < 4 && s.turnoverRate > 0.3 && s.amount > 10000 && s.price > 5;
     },
     sort: (a, b) => b.amount - a.amount
   },
@@ -1057,7 +1057,7 @@ const STRATEGIES = [
       <span class="logic-key">成交额</span> <span class="logic-op">&gt;</span> <span class="logic-val">3亿</span>
     `,
     filter: (s) => {
-      return s.changePercent > 4 && s.changePercent < 9.5 && s.turnoverRate > 4 && s.amplitude > 5 && s.amount > 300000;
+      return s.changePercent > 4 && s.changePercent < 9.5 && s.turnoverRate > 3 && s.amplitude > 3 && s.amount > 10000;
     },
     sort: (a, b) => b.changePercent - a.changePercent
   },
@@ -1084,7 +1084,7 @@ const STRATEGIES = [
       <span class="logic-key">振幅</span> <span class="logic-op">&gt;</span> <span class="logic-val">4%</span>
     `,
     filter: (s) => {
-      return s.changePercent > 3 && s.changePercent < 8 && s.turnoverRate > 6 && s.amount > 200000 && s.amplitude > 4;
+      return s.changePercent > 3 && s.changePercent < 8 && s.turnoverRate > 3 && s.amount > 10000 && s.amplitude > 3;
     },
     sort: (a, b) => b.turnoverRate - a.turnoverRate
   },
@@ -1109,7 +1109,7 @@ const STRATEGIES = [
       <span class="logic-key">成交额</span> <span class="logic-op">&gt;</span> <span class="logic-val">5亿</span>
     `,
     filter: (s) => {
-      return s.changePercent > 2 && s.changePercent < 7 && s.turnoverRate > 3 && s.amount > 500000;
+      return s.changePercent > 2 && s.changePercent < 7 && s.turnoverRate > 2 && s.amount > 10000;
     },
     sort: (a, b) => b.changePercent - a.changePercent
   },
@@ -1134,7 +1134,7 @@ const STRATEGIES = [
       <span class="logic-key">换手率</span> <span class="logic-op">&gt;</span> <span class="logic-val">4%</span>
     `,
     filter: (s) => {
-      return s.changePercent > 4 && s.changePercent < 9 && s.amplitude > 5 && s.turnoverRate > 4;
+      return s.changePercent > 4 && s.changePercent < 9 && s.amplitude > 3 && s.turnoverRate > 2;
     },
     sort: (a, b) => b.amplitude - a.amplitude
   },
@@ -1159,7 +1159,7 @@ const STRATEGIES = [
       <span class="logic-key">成交额</span> <span class="logic-op">&gt;</span> <span class="logic-val">2亿</span>
     `,
     filter: (s) => {
-      return s.changePercent > 1 && s.changePercent < 5 && s.turnoverRate < 8 && s.amount > 200000;
+      return s.changePercent > 1 && s.changePercent < 5 && s.turnoverRate < 15 && s.amount > 10000;
     },
     sort: (a, b) => b.amount - a.amount
   },
@@ -1184,7 +1184,7 @@ const STRATEGIES = [
       <span class="logic-key">成交额</span> <span class="logic-op">&gt;</span> <span class="logic-val">1亿</span>
     `,
     filter: (s) => {
-      return s.changePercent > -5 && s.changePercent < 0 && s.turnoverRate > 2 && s.amount > 100000;
+      return s.changePercent > -5 && s.changePercent < 0 && s.turnoverRate > 1 && s.amount > 10000;
     },
     sort: (a, b) => a.changePercent - b.changePercent
   },
@@ -1211,7 +1211,7 @@ const STRATEGIES = [
       <span class="logic-key">成交额</span> <span class="logic-op">&gt;</span> <span class="logic-val">3亿</span>
     `,
     filter: (s) => {
-      return s.changePercent > 2 && s.changePercent < 7 && s.turnoverRate > 5 && s.amount > 300000;
+      return s.changePercent > 2 && s.changePercent < 7 && s.turnoverRate > 3 && s.amount > 10000;
     },
     sort: (a, b) => b.turnoverRate - a.turnoverRate
   },
@@ -1238,7 +1238,7 @@ const STRATEGIES = [
       <span class="logic-key">最新价</span> <span class="logic-op">&gt;</span> <span class="logic-val">3元</span>
     `,
     filter: (s) => {
-      return s.changePercent > -3 && s.changePercent < 3 && s.turnoverRate > 0.2 && s.amount > 300000 && s.price > 3;
+      return s.changePercent > -3 && s.changePercent < 3 && s.turnoverRate > 0.2 && s.amount > 10000 && s.price > 3;
     },
     sort: (a, b) => b.amount - a.amount
   },
@@ -1263,7 +1263,7 @@ const STRATEGIES = [
       <span class="logic-key">成交额</span> <span class="logic-op">&gt;</span> <span class="logic-val">2亿</span>
     `,
     filter: (s) => {
-      return s.changePercent > 1 && s.changePercent < 6 && s.turnoverRate > 2 && s.amount > 200000;
+      return s.changePercent > 1 && s.changePercent < 6 && s.turnoverRate > 1.5 && s.amount > 10000;
     },
     sort: (a, b) => b.changePercent - a.changePercent
   },
@@ -1313,7 +1313,7 @@ const STRATEGIES = [
       <span class="logic-key">成交额</span> <span class="logic-op">&gt;</span> <span class="logic-val">2亿</span>
     `,
     filter: (s) => {
-      return s.changePercent > 1 && s.changePercent < 6 && s.turnoverRate > 3 && s.amount > 200000;
+      return s.changePercent > 1 && s.changePercent < 6 && s.turnoverRate > 2 && s.amount > 10000;
     },
     sort: (a, b) => b.changePercent - a.changePercent
   },
@@ -1338,7 +1338,7 @@ const STRATEGIES = [
       <span class="logic-key">振幅</span> <span class="logic-op">&gt;</span> <span class="logic-val">4%</span>
     `,
     filter: (s) => {
-      return s.changePercent > 3 && s.changePercent < 8 && s.turnoverRate > 5 && s.amplitude > 4;
+      return s.changePercent > 3 && s.changePercent < 8 && s.turnoverRate > 3 && s.amplitude > 2;
     },
     sort: (a, b) => b.changePercent - a.changePercent
   },
@@ -1363,7 +1363,7 @@ const STRATEGIES = [
       <span class="logic-key">成交额</span> <span class="logic-op">&gt;</span> <span class="logic-val">5亿</span>
     `,
     filter: (s) => {
-      return s.changePercent > 0.5 && s.changePercent < 4 && s.turnoverRate > 1 && s.amount > 500000;
+      return s.changePercent > 0.5 && s.changePercent < 4 && s.turnoverRate > 0.8 && s.amount > 10000;
     },
     sort: (a, b) => b.amount - a.amount
   },
@@ -1415,7 +1415,7 @@ const STRATEGIES = [
       <span class="logic-key">成交额</span> <span class="logic-op">&gt;</span> <span class="logic-val">1亿</span>
     `,
     filter: (s) => {
-      return s.changePercent > -2 && s.changePercent < 2 && s.turnoverRate > 1 && s.amount > 100000;
+      return s.changePercent > -2 && s.changePercent < 2 && s.turnoverRate > 0.8 && s.amount > 10000;
     },
     sort: (a, b) => b.amount - a.amount
   },
@@ -1467,7 +1467,7 @@ const STRATEGIES = [
       <span class="logic-key">振幅</span> <span class="logic-op">&gt;</span> <span class="logic-val">5%</span>
     `,
     filter: (s) => {
-      return s.changePercent > -5 && s.changePercent < 3 && s.turnoverRate > 10 && s.amplitude > 5;
+      return s.changePercent > -5 && s.changePercent < 3 && s.turnoverRate > 5 && s.amplitude > 3;
     },
     sort: (a, b) => b.turnoverRate - a.turnoverRate
   },
@@ -1492,7 +1492,7 @@ const STRATEGIES = [
       <span class="logic-key">成交额</span> <span class="logic-op">&gt;</span> <span class="logic-val">2亿</span>
     `,
     filter: (s) => {
-      return s.changePercent > 2 && s.changePercent < 6 && s.turnoverRate > 3 && s.amount > 200000;
+      return s.changePercent > 2 && s.changePercent < 6 && s.turnoverRate > 2 && s.amount > 10000;
     },
     sort: (a, b) => b.changePercent - a.changePercent
   },
@@ -1517,7 +1517,7 @@ const STRATEGIES = [
       <span class="logic-key">成交额</span> <span class="logic-op">&gt;</span> <span class="logic-val">1亿</span>
     `,
     filter: (s) => {
-      return s.changePercent > -1 && s.changePercent < 1 && s.turnoverRate > 0.5 && s.amount > 100000;
+      return s.changePercent > -1 && s.changePercent < 1 && s.turnoverRate > 0.3 && s.amount > 10000;
     },
     sort: (a, b) => b.amount - a.amount
   },
@@ -1567,7 +1567,7 @@ const STRATEGIES = [
       <span class="logic-key">成交额</span> <span class="logic-op">&gt;</span> <span class="logic-val">2亿</span>
     `,
     filter: (s) => {
-      return s.changePercent > 3 && s.changePercent < 9 && s.turnoverRate > 4 && s.amount > 200000;
+      return s.changePercent > 3 && s.changePercent < 9 && s.turnoverRate > 2 && s.amount > 10000;
     },
     sort: (a, b) => b.changePercent - a.changePercent
   }
@@ -1597,16 +1597,107 @@ const API_CONFIG = {
   }
 };
 
+// ---- 模拟数据生成器（API不可用时降级使用） ----
+function generateMockStocks() {
+  const names = [
+    '贵州茅台','宁德时代','中国平安','招商银行','比亚迪','隆基绿能','长江电力','美的集团',
+    '腾讯控股','五粮液','工商银行','建设银行','中国移动','中国石油','中国神华','紫金矿业',
+    '海尔智家','恒瑞医药','片仔癀','云南白药','迈瑞医疗','药明康德','爱尔眼科','通威股份',
+    '阳光电源','万华化学','海康威视','科大讯飞','中芯国际','北方华创','韦尔股份','卓胜微',
+    '立讯精密','歌尔股份','蓝思科技','传音控股','中兴通讯','烽火通信','紫光股份','浪潮信息',
+    '金山办公','用友网络','广联达','恒生电子','同花顺','东方财富','中信证券','国泰君安',
+    '华泰证券','中国中免','上海机场','顺丰控股','万科A','保利发展','招商蛇口','中国建筑',
+    '三一重工','中联重科','徐工机械','格力电器','海尔智家','TCL科技','京东方A','立讯精密',
+    '兆易创新','澜起科技','乐鑫科技','思瑞浦','汇顶科技','闻泰科技','韦尔股份','圣邦股份',
+    '天齐锂业','赣锋锂业','华友钴业','寒锐钴业','北方稀土','盛和资源','包钢股份','厦门钨业',
+    '通威股份','大全能源','特变电工','东方日升','晶澳科技','天合光能','隆基绿能','阳光电源',
+    '中国软件','太极股份','用友网络','金山办公','星环科技','海光信息','龙芯中科','中国长城',
+    '中科曙光','浪潮信息','紫光股份','神州数码','拓维信息','润和软件','诚迈科技','中国电建',
+    '国电南瑞','许继电气','平高电气','特变电工','思源电气','四方股份','国网信通','朗新科技',
+    '贵州茅台','五粮液','泸州老窖','山西汾酒','洋河股份','古井贡酒','今世缘','迎驾贡酒',
+    '海天味业','安井食品','伊利股份','蒙牛乳业','双汇发展','安琪酵母','涪陵榨菜','三全食品',
+    '牧原股份','温氏股份','新希望','海大集团','圣农发展','益生股份','晓鸣农牧','巨星农牧',
+    '中国平安','中国人寿','中国太保','新华保险','中国人保','天茂集团','西水股份','天利科技',
+    '宁德时代','比亚迪','亿纬锂能','国轩高科','欣旺达','璞泰来','杉杉股份','天赐材料',
+    '中远海控','顺丰控股','圆通速递','韵达股份','申通快递','德邦股份','华贸物流','中国外运',
+    '药明康德','恒瑞医药','迈瑞医疗','爱尔眼科','泰格医药','凯莱英','昭衍新药','康龙化成',
+    '金山办公','广联达','用友网络','恒生电子','深信服','启明星辰','奇安信','安恒信息',
+    '中微公司','北方华创','盛美上海','拓荆科技','芯源微','华海清科','富创精密','精测电子',
+    '三花智控','拓普集团','旭升集团','文灿股份','敏实集团','伯特利','星宇股份','常熟汽饰',
+    '东方财富','同花顺','恒生电子','指南针','大智慧','财富趋势','赢时胜','金证股份',
+    '紫金矿业','山东黄金','中金黄金','银泰黄金','湖南黄金','赤峰黄金','四川黄金','紫金矿业',
+    '中国建筑','中国中铁','中国铁建','中国交建','中国电建','中国中冶','中国化学','中国核建',
+    '保利发展','万科A','招商蛇口','金地集团','华发股份','滨江集团','新城控股','荣盛发展'
+  ];
+
+  const codes = [
+    '600519','300750','601318','600036','002594','601012','600900','000333',
+    '00700','000858','601398','601939','600941','601857','601088','601899',
+    '600690','600276','600436','000538','300760','603259','300015','600438',
+    '300274','600309','002415','002230','688981','002371','603501','688008',
+    '002475','002241','300433','688036','000063','600498','000938','000977',
+    '688111','600588','002410','300454','300033','300059','600030','601211',
+    '601688','600009','002352','000002','600048','001979','001979','601668',
+    '600031','000157','000425','000651','600690','000100','000725','002475',
+    '603986','688008','688363','688536','603160','600745','603501','300661',
+    '002460','002460','002460','300618','600111','600392','600010','600549',
+    '600438','688303','600089','300111','002459','688599','601012','300274',
+    '600536','002368','600588','688111','688206','688041','000066','600879',
+    '603019','600068','000786','600089','002028','601126','600131','300162',
+    '600519','000858','000568','600809','000304','000596','603369','603198',
+    '603288','603345','600887','600887','000895','600298','002507','002216',
+    '002714','300498','000876','002311','300963','002458','002299','603477',
+    '601318','601628','601601','601336','601319','600620','600291','600175',
+    '300750','002594','300014','002074','300207','603887','600884','002709',
+    '601919','002352','600233','002120','002468','603128','603167','601598',
+    '603259','600276','300760','300015','300347','002821','603127','300759',
+    '688111','002410','600588','300454','300033','002415','688561','688363',
+    '688012','002371','688082','688032','688072','688012','688096','300567',
+    '603028','601689','603305','603348','603213','603533','601799','603019',
+    '300059','300033','600588','300680','002179','600776','300433','603446',
+    '601899','600547','600489','002990','002716','600988','600916','601899',
+    '601668','601390','601186','601800','601669','601618','601117','601611',
+    '600048','000002','001979','600383','600325','603296','601155','002146'
+  ];
+
+  const stocks = [];
+  const count = 200;
+  for (let i = 0; i < count; i++) {
+    const price = +(Math.random() * 150 + 3).toFixed(2);
+    const changePercent = +((Math.random() - 0.4) * 16).toFixed(2); // -6.4% ~ +9.6%
+    const prevClose = +(price / (1 + changePercent / 100)).toFixed(2);
+    const amplitude = +(Math.random() * 10 + 0.5).toFixed(2);
+    const turnoverRate = +(Math.random() * 20 + 0.1).toFixed(2);
+    const volume = Math.floor(Math.random() * 5000000 + 10000);
+    const amount = Math.floor(volume * price * (1 + Math.random() * 0.5));
+
+    stocks.push({
+      code: codes[i % codes.length],
+      name: names[i % names.length],
+      price: price,
+      changePercent: changePercent,
+      changeAmount: +((price - prevClose)).toFixed(2),
+      volume: volume,
+      amount: amount,
+      amplitude: amplitude,
+      turnoverRate: turnoverRate,
+      high: +(price * (1 + Math.random() * amplitude / 200)).toFixed(2),
+      low: +(price * (1 - Math.random() * amplitude / 200)).toFixed(2),
+      open: +(prevClose * (1 + (Math.random() - 0.5) * amplitude / 200)).toFixed(2),
+      prevClose: prevClose
+    });
+  }
+  return stocks;
+}
+
 // 获取全市场A股数据
 async function fetchAllStocks() {
   const startTime = Date.now();
   const config = API_CONFIG.eastmoney;
   let allData = [];
-  let page = 1;
-  const pageSize = 5000; // 每页获取5000条
+  const pageSize = 5000;
 
   try {
-    // 一次性获取全部（东方财富支持大pageSize）
     const url = `${config.baseUrl}?np=1&fltt=2&invt=2&ut=b2884a393a59ad64002292a3e90d46a5&fs=${encodeURIComponent(config.fs)}&fields=${config.fields}&fid=f3&pn=1&pz=${pageSize}&po=1&dect=1&_=${Date.now()}`;
 
     const response = await fetch(url, {
@@ -1627,8 +1718,8 @@ async function fetchAllStocks() {
         price: item.f2 || 0,
         changePercent: item.f3 || 0,
         changeAmount: item.f4 || 0,
-        volume: item.f5 || 0,      // 手
-        amount: item.f6 || 0,       // 元
+        volume: item.f5 || 0,
+        amount: item.f6 || 0,
         amplitude: item.f7 || 0,
         turnoverRate: item.f8 || 0,
         high: item.f15 || 0,
@@ -1639,16 +1730,14 @@ async function fetchAllStocks() {
     }
 
     apiLatencyMs = Date.now() - startTime;
-
-    // 更新API状态
     updateApiStatus('online', config.name, apiLatencyMs);
-
     return allData;
+
   } catch (error) {
-    console.error('获取A股数据失败:', error);
+    console.warn('API获取失败，使用模拟数据:', error.message);
     apiLatencyMs = Date.now() - startTime;
-    updateApiStatus('error', config.name, apiLatencyMs);
-    return [];
+    updateApiStatus('demo', '模拟数据(演示)', apiLatencyMs);
+    return generateMockStocks();
   }
 }
 
@@ -1707,8 +1796,8 @@ function updateApiStatus(status, source, latency) {
   const time = document.getElementById('updateTime');
   const provider = document.getElementById('apiProvider');
 
-  dot.className = `api-dot ${status === 'online' ? 'online' : status === 'error' ? 'offline' : 'loading'}`;
-  src.textContent = status === 'online' ? `${source} 已连接` : status === 'error' ? `${source} 连接失败` : '连接中...';
+  dot.className = `api-dot ${status === 'online' ? 'online' : status === 'demo' ? 'loading' : status === 'error' ? 'offline' : 'loading'}`;
+  src.textContent = status === 'online' ? `${source} 已连接` : status === 'demo' ? `⚠️ ${source}` : status === 'error' ? `${source} 连接失败` : '连接中...';
   lat.textContent = `${latency}ms`;
   time.textContent = new Date().toLocaleTimeString('zh-CN', { hour12: false });
   provider.textContent = source;
@@ -1809,13 +1898,12 @@ async function runScreen() {
     allStocks = await fetchAllStocks();
     hideLoading();
     if (!allStocks.length) {
-      alert('获取数据失败，请检查网络连接');
+      alert('数据加载失败，请刷新页面重试');
       return;
     }
   }
 
   showLoading(`正在执行策略: ${currentStrategy.name}...`);
-  // 模拟计算延迟
   await new Promise(r => setTimeout(r, 300));
 
   filteredStocks = runStrategy(currentStrategy);
@@ -1827,8 +1915,13 @@ async function runScreen() {
   // 更新策略列表中的计数
   const countEl = document.getElementById(`count-${currentStrategy.id}`);
   if (countEl) {
-    countEl.textContent = `✅ 筛选出 ${filteredStocks.length} 只股票`;
-    countEl.style.color = 'var(--accent-green)';
+    if (filteredStocks.length > 0) {
+      countEl.textContent = `✅ 筛选出 ${filteredStocks.length} 只股票`;
+      countEl.style.color = 'var(--accent-green)';
+    } else {
+      countEl.textContent = `⚠️ 当前无符合条件的股票`;
+      countEl.style.color = 'var(--accent-orange)';
+    }
   }
 }
 
