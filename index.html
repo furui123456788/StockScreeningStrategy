@@ -189,6 +189,8 @@ body {
 
 .strategy-item:hover { background: var(--bg-hover); }
 .strategy-item.active { background: var(--bg-card); border-color: var(--accent-blue); }
+.strategy-item.multi-selected { background: rgba(74, 144, 217, 0.15); border-left: 3px solid var(--accent-blue); }
+.strategy-item.multi-selected.active { border-color: var(--accent-blue); }
 
 .strategy-name {
   font-size: 13px;
@@ -2476,9 +2478,9 @@ function renderStrategyList(filter = 'all', search = '') {
   }
 
   list.innerHTML = filtered.map(s => `
-    <div class="strategy-item ${currentStrategy && currentStrategy.id === s.id ? 'active' : ''}"
+    <div class="strategy-item ${currentStrategy && currentStrategy.id === s.id ? 'active' : ''} ${selectedStrategies.has(s.id) ? 'multi-selected' : ''}"
          onclick="selectStrategy(${s.id})">
-      <span class="checkbox" onclick="toggleStrategySelect(${s.id}, event)"></span>
+      <span class="checkbox ${selectedStrategies.has(s.id) ? 'checked' : ''}" onclick="toggleStrategySelect(${s.id}, event)"></span>
       <div class="strategy-name">
         <span class="strategy-rank rank-${s.rank.toLowerCase()}">${s.rank}</span>
         ${s.name}
