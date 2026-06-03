@@ -2233,6 +2233,7 @@ async function fetchAllStocks() {
         const totalPages = Math.ceil(total / pageSize);
         console.log(`[DEBUG] 需要请求 ${totalPages} 页，每页${pageSize}条`);
 
+        let emptyCount = 0;
         for (let page = 1; page <= totalPages; page++) {
           try {
             url = `${source.baseUrl}?np=1&fltt=2&invt=2&ut=b2884a393a59ad64002292a3e90d46a5&fs=${encodeURIComponent(source.fs)}&fields=${source.fields}&fid=f3&pn=${page}&pz=${pageSize}&po=1&dect=1&_=${Date.now()}`;
@@ -2244,16 +2245,27 @@ async function fetchAllStocks() {
             });
             if (!response.ok) {
               console.warn(`[DEBUG] 第${page}页失败，跳过`);
+              emptyCount++;
+              if (emptyCount >= 3) { console.log('[DEBUG] 连续3页失败，停止'); break; }
               continue;
             }
             data = await response.json();
             const pageData = source.parse(data);
             if (pageData && pageData.length > 0) {
               allData = allData.concat(pageData);
+              emptyCount = 0;
               console.log(`[DEBUG] 第${page}/${totalPages}页: +${pageData.length}条，累计${allData.length}条`);
+              // 获取到足够数据就停止（total可能不准）
+              if (allData.length >= total) { console.log('[DEBUG] 已获取全部数据'); break; }
+            } else {
+              emptyCount++;
+              console.warn(`[DEBUG] 第${page}页返回0条，空页计数=${emptyCount}`);
+              if (emptyCount >= 3) { console.log('[DEBUG] 连续3页空数据，停止'); break; }
             }
           } catch (e) {
             console.warn(`[DEBUG] 第${page}页错误，跳过: ${e.message}`);
+            emptyCount++;
+            if (emptyCount >= 3) { console.log('[DEBUG] 连续3页错误，停止'); break; }
           }
           // 每10页暂停100ms
           if (page % 10 === 0) {
@@ -2271,40 +2283,65 @@ async function fetchAllStocks() {
           throw new Error('返回数据为空');
         }
       } else if (source.id === 'tencent' || source.id === 'sina') {
-        // 分批获取，每次100只
-        const allCodes = source.allCodes;
+        // 腾讯/新浪：使用预定义的热门代码列表，避免大量空返回
+        // 实际A股约5700只，这里用常见代码段
+        const commonCodes = (() => {
+          const codes = [];
+          // 沪市主板常见代码段
+          for (let i = 600000; i <= 600999; i++) codes.push('sh' + i);
+          for (let i = 601000; i <= 601999; i++) codes.push('sh' + i);
+          for (let i = 603000; i <= 603999; i++) codes.push('sh' + i);
+          for (let i = 605000; i <= 605999; i++) codes.push('sh' + i);
+          // 科创板
+          for (let i = 688000; i <= 688999; i++) codes.push('sh' + i);
+          // 深市主板
+          for (let i = 1; i <= 1999; i++) codes.push('sz' + String(i).padStart(6, '0'));
+          for (let i = 2000; i <= 2999; i++) codes.push('sz' + String(i).padStart(6, '0'));
+          // 创业板
+          for (let i = 300000; i <= 300999; i++) codes.push('sz' + i);
+          for (let i = 301000; i <= 301999; i++) codes.push('sz' + i);
+          // 北交所
+          for (let i = 430000; i <= 430999; i++) codes.push('bj' + i);
+          for (let i = 830000; i <= 830999; i++) codes.push('bj' + i);
+          for (let i = 920000; i <= 920999; i++) codes.push('bj' + i);
+          return codes;
+        })();
+
         const batchSize = 100;
         let allData = [];
-        const totalBatches = Math.ceil(allCodes.length / batchSize);
-        console.log(`[DEBUG] 腾讯财经需要请求 ${totalBatches} 批，每批${batchSize}只`);
+        const totalBatches = Math.ceil(commonCodes.length / batchSize);
+        console.log(`[DEBUG] ${source.name}需要请求 ${totalBatches} 批，每批${batchSize}只`);
 
         for (let i = 0; i < totalBatches; i++) {
-          const batch = allCodes.slice(i * batchSize, (i + 1) * batchSize);
+          const batch = commonCodes.slice(i * batchSize, (i + 1) * batchSize);
           url = `${source.baseUrl}${batch.join(',')}`;
-          response = await fetch(url, {
-            headers: {
-              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+          try {
+            response = await fetch(url, {
+              headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' }
+            });
+            if (!response.ok) {
+              console.warn(`[DEBUG] ${source.name}第${i+1}批失败: HTTP ${response.status}`);
+              continue;
             }
-          });
-          if (!response.ok) {
-            console.warn(`[DEBUG] 腾讯第${i+1}批失败: HTTP ${response.status}`);
-            continue;
+            const buf = await response.arrayBuffer();
+            const text = new TextDecoder('gbk', {fatal: false}).decode(buf);
+            const batchData = source.parse(text);
+            if (batchData && batchData.length > 0) {
+              allData = allData.concat(batchData);
+            }
+            console.log(`[DEBUG] ${source.name}第${i+1}/${totalBatches}批: +${batchData?.length || 0}条，累计${allData.length}条`);
+            // 获取到6000+就停止
+            if (allData.length >= 6000) { console.log('[DEBUG] 已获取足够数据，停止'); break; }
+          } catch (e) {
+            console.warn(`[DEBUG] ${source.name}第${i+1}批错误: ${e.message}`);
           }
-          // 腾讯API返回GBK编码，强制用GBK解码
-              const buf = await response.arrayBuffer();
-              const text = new TextDecoder('gbk', {fatal: false}).decode(buf);
-          const batchData = source.parse(text);
-          if (batchData && batchData.length > 0) {
-            allData = allData.concat(batchData);
-          }
-          console.log(`[DEBUG] 腾讯第${i+1}/${totalBatches}批: +${batchData?.length || 0}条，累计${allData.length}条`);
-          // 每10批暂停一下，避免请求过快
-          if (i > 0 && i % 10 === 0) {
+          // 每10批暂停100ms
+          if (i % 10 === 0) {
             await new Promise(r => setTimeout(r, 100));
           }
         }
 
-        console.log(`[DEBUG] 腾讯财经总计获取: ${allData.length} 只股票`);
+        console.log(`[DEBUG] ${source.name}总计获取: ${allData.length} 只股票`);
         if (allData.length > 0) {
           apiLatencyMs = Date.now() - startTime;
           updateApiStatus('online', source.name, apiLatencyMs);
