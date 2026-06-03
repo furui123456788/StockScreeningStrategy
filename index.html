@@ -1077,6 +1077,11 @@ let currentStrategy = null; // 当前选中策略
 let sortField = null;       // 排序字段
 let sortDir = 'desc';       // 排序方向
 let apiLatencyMs = 0;       // API延迟
+let selectedStrategies = new Set(); // 多选模式已选策略
+let multiMode = false;      // 多选模式开关
+let activeConcept = null;   // 当前选中板块
+let customStrategy = null;  // 自定义策略
+let forceDataSource = 'auto'; // 强制数据源
 
 // ---- 30个量化筛选策略定义 ----
 const STRATEGIES = [
@@ -2115,7 +2120,6 @@ const SINA_SOURCE = {
 };
 
 const DATA_SOURCES = [
-  SINA_SOURCE,
   {
     id: 'eastmoney',
     name: '东方财富',
@@ -2282,7 +2286,7 @@ async function fetchAllStocks() {
         } else {
           throw new Error('返回数据为空');
         }
-      } else if (source.id === 'tencent' || source.id === 'sina') {
+      } else if (source.id === 'tencent') {
         // 腾讯/新浪：使用预定义的热门代码列表，避免大量空返回
         // 实际A股约5700只，这里用常见代码段
         const commonCodes = (() => {
@@ -2459,7 +2463,6 @@ async function fetchMarketIndices() {
 }
 
 // 数据源手动切换
-let forceDataSource = 'auto';
 function switchDataSource(val) {
   forceDataSource = val;
   console.log(`[DEBUG] 手动切换数据源: ${val}`);
@@ -2503,12 +2506,6 @@ function runStrategy(strategy) {
 }
 
 // ---- UI渲染模块 ----
-
-// 多选模式变量（必须在renderStrategyList之前声明）
-let selectedStrategies = new Set();
-let multiMode = false;
-let activeConcept = null;
-let customStrategy = null;
 
 // 渲染策略列表
 function renderStrategyList(filter = 'all', search = '') {
