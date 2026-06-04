@@ -2989,23 +2989,50 @@ async function openStockDetail(code, name) {
   document.getElementById('modalTitle').textContent = `${name} (${code})`;
   document.getElementById('klineSource').textContent = '数据源: 东方财富';
 
-  // 并行获取K线和资金流向
-  const [kline, fundFlow] = await Promise.all([
-    fetchKlineData(code, currentKlinePeriod),
-    fetchFundFlow(code)
-  ]);
-  currentKlineData = kline;
+  // 清空之前的内容
+  const canvas = document.getElementById('klineCanvas');
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = 'var(--text-muted)';
+  ctx.font = '14px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('正在加载K线数据...', canvas.offsetWidth / 2, 200);
 
-  // 渲染参数
-  renderStockParams(code, name);
-  // 渲染K线
-  if (kline.length > 0) drawKline(kline);
-  // 渲染资金流向
-  renderFundFlow(fundFlow);
-  // 吸筹/出货判断
-  renderCollectSignal(kline, fundFlow);
-  // 走势预判
-  renderPredictions(kline, fundFlow);
+  try {
+    // 并行获取K线和资金流向
+    const [kline, fundFlow] = await Promise.all([
+      fetchKlineData(code, currentKlinePeriod),
+      fetchFundFlow(code)
+    ]);
+    currentKlineData = kline;
+
+    // 渲染参数
+    renderStockParams(code, name);
+    // 渲染K线
+    if (kline.length > 0) {
+      drawKline(kline);
+    } else {
+      // K线获取失败，显示提示
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = 'var(--text-muted)';
+      ctx.font = '14px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('K线数据获取失败，请检查网络或稍后重试', canvas.offsetWidth / 2, 200);
+    }
+    // 渲染资金流向
+    renderFundFlow(fundFlow);
+    // 吸筹/出货判断
+    renderCollectSignal(kline, fundFlow);
+    // 走势预判
+    renderPredictions(kline, fundFlow);
+  } catch (e) {
+    console.error('个股详情加载失败:', e);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = 'var(--accent-red)';
+    ctx.font = '14px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('数据加载失败: ' + e.message, canvas.offsetWidth / 2, 200);
+  }
 }
 
 function closeStockModal() {
