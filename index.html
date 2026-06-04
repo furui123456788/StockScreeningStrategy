@@ -1012,6 +1012,7 @@ body.multi-mode .strategy-item.selected { border-color: var(--accent-blue); back
       <div class="content-actions">
         <button class="btn" onclick="showAllStocks()">📋 显示全部股票</button>
         <button class="btn" onclick="openCustomStrategy()">⚙️ 自定义策略</button>
+        <button class="btn" onclick="showTutorial()">📖 使用教程</button>
         <button class="btn" onclick="exportCSV()">📥 导出CSV</button>
         <button class="btn btn-success" onclick="runScreen()">▶ 运行筛选</button>
       </div>
@@ -2136,7 +2137,7 @@ const DATA_SOURCES = [
           code: code,
           name: item.f14 || '',
           price: item.f2 || 0,
-          changePercent: (item.f3 || 0) / 100,
+          changePercent: item.f3 || 0,
           changeAmount: item.f4 || 0,
           volume: item.f5 || 0,
           amount: item.f6 || 0,
@@ -2181,11 +2182,11 @@ const DATA_SOURCES = [
           code: code.replace(/^(sh|sz|bj)/, ''),
           name: fields[1] || '',
           price: parseFloat(fields[3]) || 0,
-          changePercent: (parseFloat(fields[5]) || 0) / 100,
-          changeAmount: parseFloat(fields[4]) || 0,
+          changePercent: parseFloat(fields[32]) || 0,
+          changeAmount: parseFloat(fields[31]) || 0,
           volume: parseInt(fields[6]) || 0,
           amount: parseInt(fields[7]) || 0,
-          amplitude: parseFloat(fields[8]) || 0,
+          amplitude: parseFloat(fields[43]) || 0,
           turnoverRate: parseFloat(fields[38]) || 0,
           high: parseFloat(fields[33]) || 0,
           low: parseFloat(fields[34]) || 0,
@@ -2414,7 +2415,7 @@ async function fetchMarketIndices() {
         if (!idx) return;
 
         const price = parseFloat(fields[3]) || 0;
-        const changePercent = parseFloat(fields[5]) || 0;
+        const changePercent = parseFloat(fields[32]) || 0;
 
         const el = document.getElementById(idx.el);
         const cel = document.getElementById(idx.cel);
@@ -3023,6 +3024,75 @@ function closeCustomStrategy() {
   const modal = document.getElementById('customStrategyModal');
   if (modal) modal.remove();
   customModalActive = false;
+}
+
+// 显示教程弹窗
+function showTutorial() {
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay active';
+  modal.style.zIndex = '2000';
+  modal.id = 'tutorialModal';
+  modal.innerHTML = `
+    <div class="modal-box" style="max-width:700px;max-height:80vh;overflow-y:auto">
+      <button class="modal-close" onclick="closeTutorial()">&times;</button>
+      <div class="modal-title">📖 QuantScreener Pro 使用教程</div>
+      
+      <div style="font-size:14px;line-height:1.8;color:var(--text-secondary)">
+        <h3 style="color:var(--accent-blue);margin:16px 0 8px">一、快速开始</h3>
+        <p>1. 打开页面，等待数据加载（顶部显示"已连接"）</p>
+        <p>2. 点击左侧任意策略 → 点击"▶ 运行筛选"</p>
+        <p>3. 查看筛选结果，点击个股查看详情</p>
+        
+        <h3 style="color:var(--accent-blue);margin:16px 0 8px">二、策略说明</h3>
+        <table style="width:100%;border-collapse:collapse;font-size:12px">
+          <tr style="background:var(--bg-primary)"><th style="padding:6px;text-align:left;border:1px solid var(--border)">策略</th><th style="padding:6px;text-align:left;border:1px solid var(--border)">类型</th><th style="padding:6px;text-align:left;border:1px solid var(--border)">适用场景</th></tr>
+          <tr><td style="padding:4px;border:1px solid var(--border)">#1 多因子Alpha</td><td style="padding:4px;border:1px solid var(--border)">稳健/中长线</td><td style="padding:4px;border:1px solid var(--border)">寻找优质股，胜率60-65%</td></tr>
+          <tr><td style="padding:4px;border:1px solid var(--border)">#2 量价背离突破</td><td style="padding:4px;border:1px solid var(--border)">激进/短线</td><td style="padding:4px;border:1px solid var(--border)">开盘30分钟使用，捕捉爆发</td></tr>
+          <tr><td style="padding:4px;border:1px solid var(--border)">#3 北向资金重仓</td><td style="padding:4px;border:1px solid var(--border)">稳健/中线</td><td style="padding:4px;border:1px solid var(--border)">跟随外资，1-3个月</td></tr>
+          <tr><td style="padding:4px;border:1px solid var(--border)">#4 龙虎榜机构席位</td><td style="padding:4px;border:1px solid var(--border)">激进/短线</td><td style="padding:4px;border:1px solid var(--border)">机构动向，1-5天</td></tr>
+          <tr><td style="padding:4px;border:1px solid var(--border)">#5 底部放量反转</td><td style="padding:4px;border:1px solid var(--border)">中线</td><td style="padding:4px;border:1px solid var(--border)">抄底反弹，1-3个月</td></tr>
+          <tr><td style="padding:4px;border:1px solid var(--border)">#8 低估值高股息</td><td style="padding:4px;border:1px solid var(--border)">保守/长线</td><td style="padding:4px;border:1px solid var(--border)">价值投资，6-12个月</td></tr>
+        </table>
+        
+        <h3 style="color:var(--accent-blue);margin:16px 0 8px">三、板块筛选</h3>
+        <p>1. 点击左侧"📂 板块"展开概念面板</p>
+        <p>2. 选择板块（如PCB、AI、芯片）</p>
+        <p>3. 再选策略运行 → 只在该板块内筛选</p>
+        <p>4. 收起板块 → 恢复全市场筛选</p>
+        
+        <h3 style="color:var(--accent-blue);margin:16px 0 8px">四、多策略交集（S级信号）</h3>
+        <p>1. 点击"多选"按钮开启多选模式</p>
+        <p>2. 勾选2-4个策略</p>
+        <p>3. 点击"运行交集筛选"</p>
+        <p>4. 被多个策略同时选中的股票信号更强</p>
+        
+        <h3 style="color:var(--accent-blue);margin:16px 0 8px">五、自定义策略</h3>
+        <p>点击"⚙️ 自定义策略"→ 设置涨跌幅/换手率/成交额/股价/振幅 → 运行筛选</p>
+        
+        <h3 style="color:var(--accent-blue);margin:16px 0 8px">六、各时段推荐</h3>
+        <table style="width:100%;border-collapse:collapse;font-size:12px">
+          <tr style="background:var(--bg-primary)"><th style="padding:6px;text-align:left;border:1px solid var(--border)">时段</th><th style="padding:6px;text-align:left;border:1px solid var(--border)">推荐策略</th></tr>
+          <tr><td style="padding:4px;border:1px solid var(--border)">9:30 开盘</td><td style="padding:4px;border:1px solid var(--border)">#2 量价背离、#7 突破高点</td></tr>
+          <tr><td style="padding:4px;border:1px solid var(--border)">10:00-11:30</td><td style="padding:4px;border:1px solid var(--border)">#6 均线多头、#9 业绩超预期</td></tr>
+          <tr><td style="padding:4px;border:1px solid var(--border)">13:00-14:30</td><td style="padding:4px;border:1px solid var(--border)">#3 北向资金、#5 底部放量</td></tr>
+          <tr><td style="padding:4px;border:1px solid var(--border)">14:30-15:00</td><td style="padding:4px;border:1px solid var(--border)">#1 多因子Alpha（选次日候选）</td></tr>
+        </table>
+        
+        <h3 style="color:var(--accent-blue);margin:16px 0 8px">七、风险提示</h3>
+        <p>⚠️ 单只股票仓位不超过20%</p>
+        <p>⚠️ 亏损-5%必须止损</p>
+        <p>⚠️ 同时持有3-5只不同板块股票</p>
+        <p>⚠️ 涨幅>7%当天不追高</p>
+        <p style="color:var(--text-muted);margin-top:12px">本工具仅供学习研究，不构成投资建议</p>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+}
+
+function closeTutorial() {
+  const modal = document.getElementById('tutorialModal');
+  if (modal) modal.remove();
 }
 
 function runCustomStrategy() {
