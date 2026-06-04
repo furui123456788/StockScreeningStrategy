@@ -1067,7 +1067,7 @@ body.multi-mode .strategy-item.selected { border-color: var(--accent-blue); back
     <!-- Footer -->
     <div class="footer">
       <span>⚠️ 免责声明：本工具仅供学习研究，不构成任何投资建议。股市有风险，投资需谨慎。</span>
-      <span>数据源: <span id="footerDataSource">东方财富</span> | API延迟: <span id="footerLatency">~200ms</span></span>
+      <span>数据源: <span id="footerDataSource">东方财富</span> | API延迟: <span id="footerLatency">~200ms</span> | 数据更新: <span id="dataUpdateTime">--</span></span>
     </div>
   </main>
 </div>
@@ -1090,6 +1090,17 @@ let multiMode = false;      // 多选模式开关
 let activeConcept = null;   // 当前选中板块
 let customStrategy = null;  // 自定义策略
 let forceDataSource = 'auto'; // 强制数据源
+
+// CORS代理 - 解决GitHub Pages跨域问题
+const CORS_PROXY = 'https://corsproxy.io/?';
+function proxyUrl(url) {
+  // 只对东方财富域名使用代理（腾讯接口不需要）
+  if (url.includes('eastmoney.com') || url.includes('push2')) {
+    return CORS_PROXY + encodeURIComponent(url);
+  }
+  return url;
+}
+
 
 // ---- 30个量化筛选策略定义 ----
 const STRATEGIES = [
@@ -2131,7 +2142,7 @@ const DATA_SOURCES = [
     id: 'eastmoney',
     name: '东方财富',
     type: 'json',
-    baseUrl: 'https://push2.eastmoney.com/api/qt/clist/get',
+    baseUrl: 'https://push2.eastmoney.com/api/qt/clist/get',  // 会通过proxyUrl添加代理
     fields: 'f2,f3,f4,f5,f6,f7,f8,f12,f14,f15,f16,f17,f18',
     fs: 'm:0+t:6,m:0+t:80,m:1+t:2,m:1+t:23,m:0+t:81+s:2048',
     parse: (data) => {
@@ -2224,7 +2235,7 @@ async function fetchAllStocks() {
 
       if (source.id === 'eastmoney') {
         // 第一步：先请求1条获取total总数
-        url = `${source.baseUrl}?np=1&fltt=2&invt=2&ut=b2884a393a59ad64002292a3e90d46a5&fs=${encodeURIComponent(source.fs)}&fields=${source.fields}&fid=f3&pn=1&pz=1&po=1&dect=1&_=${Date.now()}`;
+        url = proxyUrl(`${source.baseUrl}?np=1&fltt=2&invt=2&ut=b2884a393a59ad64002292a3e90d46a5&fs=${encodeURIComponent(source.fs)}&fields=${source.fields}&fid=f3&pn=1&pz=1&po=1&dect=1&_=${Date.now()}`;
         console.log(`[DEBUG] 获取总数: ${url.substring(0, 100)}...`);
         response = await fetch(url, {
           headers: {
@@ -2247,7 +2258,7 @@ async function fetchAllStocks() {
         let emptyCount = 0;
         for (let page = 1; page <= totalPages; page++) {
           try {
-            url = `${source.baseUrl}?np=1&fltt=2&invt=2&ut=b2884a393a59ad64002292a3e90d46a5&fs=${encodeURIComponent(source.fs)}&fields=${source.fields}&fid=f3&pn=${page}&pz=${pageSize}&po=1&dect=1&_=${Date.now()}`;
+            url = proxyUrl(`${source.baseUrl}?np=1&fltt=2&invt=2&ut=b2884a393a59ad64002292a3e90d46a5&fs=${encodeURIComponent(source.fs)}&fields=${source.fields}&fid=f3&pn=${page}&pz=${pageSize}&po=1&dect=1&_=${Date.now()}`;
             response = await fetch(url, {
               headers: {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
@@ -2496,6 +2507,9 @@ function updateApiStatus(status, source, latency) {
   // 同步更新底部显示
   if (footerSource) footerSource.textContent = source;
   if (footerLatency) footerLatency.textContent = `${latency}ms`;
+  // 更新数据时间
+  const dataTimeEl = document.getElementById('dataUpdateTime');
+  if (dataTimeEl) dataTimeEl.textContent = new Date().toLocaleTimeString('zh-CN', {hour12:false});
 }
 
 // ---- 策略筛选引擎 ----
@@ -2938,7 +2952,7 @@ async function fetchKlineData(code, period = 'daily') {
   const kltMap = { daily: '101', weekly: '102', monthly: '103' };
   const market = code.startsWith('6') ? '1' : '0';
   const secid = `${market}.${code}`;
-  const url = `https://push2his.eastmoney.com/api/qt/stock/kline/get?fields1=f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f11,f12,f13&fields2=f51,f52,f53,f54,f55,f56,f57,f58,f59,f60,f61&beg=0&end=20500101&ut=fa5fd1943c7b386f172d6893dbfba10b&rtntype=6&secid=${secid}&klt=${kltMap[period]}&fqt=1&_=${Date.now()}`;
+  const url = proxyUrl(`https://push2his.eastmoney.com/api/qt/stock/kline/get?fields1=f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f11,f12,f13&fields2=f51,f52,f53,f54,f55,f56,f57,f58,f59,f60,f61&beg=0&end=20500101&ut=fa5fd1943c7b386f172d6893dbfba10b&rtntype=6&secid=${secid}&klt=${kltMap[period]}&fqt=1&_=${Date.now()}`;
   try {
     const resp = await fetch(url, { headers: { 'Referer': 'https://quote.eastmoney.com/' } });
     const data = await resp.json();
@@ -2956,7 +2970,7 @@ async function fetchKlineData(code, period = 'daily') {
 async function fetchFundFlow(code) {
   const market = code.startsWith('6') ? '1' : '0';
   const secid = `${market}.${code}`;
-  const url = `https://push2.eastmoney.com/api/qt/stock/get?secid=${secid}&fields=f469,f137,f193,f140,f194,f143,f195,f146,f196,f149,f197,f470,f434,f454,f435,f455,f436,f456,f437,f457,f438,f458,f471,f459,f460,f461,f462,f463,f464,f465,f466,f467,f468,f170,f119,f291&ut=b2884a393a59ad64002292a3e90d46a5&_=${Date.now()}`;
+  const url = proxyUrl(`https://push2.eastmoney.com/api/qt/stock/get?secid=${secid}&fields=f469,f137,f193,f140,f194,f143,f195,f146,f196,f149,f197,f470,f434,f454,f435,f455,f436,f456,f437,f457,f438,f458,f471,f459,f460,f461,f462,f463,f464,f465,f466,f467,f468,f170,f119,f291&ut=b2884a393a59ad64002292a3e90d46a5&_=${Date.now()}`;
   try {
     const resp = await fetch(url, { headers: { 'Referer': 'https://data.eastmoney.com/' } });
     const data = await resp.json();
