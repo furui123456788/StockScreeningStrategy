@@ -938,6 +938,13 @@ body.multi-mode .strategy-item.selected { border-color: var(--accent-blue); back
         <option value="efinance">efinance</option>
       </select>
     </div>
+    <div class="api-badge">
+      <button class="btn" onclick="manualRefresh()" style="font-size:11px;padding:3px 8px" title="立即刷新数据">🔄 刷新</button>
+    </div>
+    <div class="api-badge">
+      <span>自动刷新:</span>
+      <span id="autoRefreshStatus" style="color:var(--accent-green)">开启</span>
+    </div>
   </div>
 </header>
 
@@ -2841,12 +2848,81 @@ async function init() {
   await new Promise(r => setTimeout(r, 500));
   hideLoading();
 
-  // 自动刷新指数
+  // 自动刷新指数（每30秒）
   setInterval(fetchMarketIndices, 30000);
-  // 每5分钟刷新股票数据
-  setInterval(async () => {
+
+  // 智能自动刷新股票数据
+  startAutoRefresh();
+}
+
+// 检查是否在交易时间
+function isTradingTime() {
+  const now = new Date();
+  const hour = now.getHours();
+  const minute = now.getMinutes();
+  const time = hour * 60 + minute;
+  // 交易时间: 9:30-11:30, 13:00-15:00
+  const morningStart = 9 * 60 + 30;
+  const morningEnd = 11 * 60 + 30;
+  const afternoonStart = 13 * 60;
+  const afternoonEnd = 15 * 60;
+  return (time >= morningStart && time <= morningEnd) || (time >= afternoonStart && time <= afternoonEnd);
+}
+
+// 启动智能自动刷新
+let autoRefreshInterval = null;
+function startAutoRefresh() {
+  if (autoRefreshInterval) clearInterval(autoRefreshInterval);
+
+  const refresh = async () => {
+    const isTrading = isTradingTime();
+    const interval = isTrading ? 60000 : 300000; // 交易时间60秒，非交易时间5分钟
+    const statusText = isTrading ? '交易中(60s)' : '休市(5min)';
+
+    const statusEl = document.getElementById('autoRefreshStatus');
+    if (statusEl) statusEl.textContent = statusText;
+
+    console.log(`[自动刷新] ${isTrading ? '交易时间' : '非交易时间'}，间隔${interval/1000}秒`);
     allStocks = await fetchAllStocks();
-  }, 300000);
+
+    // 重新运行当前策略
+    if (currentStrategy) {
+      runScreen();
+    }
+  };
+
+  // 立即执行一次
+  refresh();
+
+  // 每分钟检查一次是否在交易时间，并执行刷新
+  autoRefreshInterval = setInterval(refresh, 60000);
+}
+
+// 手动刷新
+async function manualRefresh() {
+  console.log('[手动刷新] 开始刷新数据...');
+  const btn = document.querySelector('button[onclick="manualRefresh()"]');
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = '🔄 刷新中...';
+  }
+
+  try {
+    allStocks = await fetchAllStocks();
+    // 重新运行当前策略
+    if (currentStrategy) {
+      runScreen();
+    }
+    console.log('[手动刷新] 完成');
+  } catch (e) {
+    console.error('[手动刷新] 失败:', e);
+    alert('刷新失败: ' + e.message);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = '🔄 刷新';
+    }
+  }
 }
 
 // 启动
